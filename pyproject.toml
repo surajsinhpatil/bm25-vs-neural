@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "irproj"
+version = "0.2.0"
+description = "BM25 vs. neural retrieval on computer-security abstracts (IR course project, Group 10)"
+requires-python = ">=3.9"
+dependencies = ["numpy", "scipy", "nltk", "matplotlib", "pandas"]
+
+[project.optional-dependencies]
+dense = ["torch", "transformers", "adapters"]
+validate = ["pytrec_eval-terrier", "pyserini"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

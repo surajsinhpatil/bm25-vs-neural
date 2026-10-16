@@ -1,0 +1,600 @@
+<top>
+<num> Number: 1
+<title> exploitation of Log4Shell (CVE-2021-44228)
+
+<desc> Description:
+Papers that study, measure or defend against exploitation of the Log4Shell vulnerability in Apache Log4j.
+
+<narr> Narrative:
+Relevant: analyses of Log4Shell/CVE-2021-44228 exploitation, attack traffic, patching or detection. Mentioning it only as one example among many vulnerabilities is grade 1. Other Log4j bugs alone are 0.
+
+</top>
+
+<top>
+<num> Number: 2
+<title> Spectre variant 1 bounds check bypass (CVE-2017-5753)
+
+<desc> Description:
+Work on the Spectre v1 (bounds check bypass) speculative execution attack or defences specific to it.
+
+<narr> Narrative:
+Relevant: papers presenting, extending, detecting or mitigating Spectre v1. Papers on other transient execution attacks (Meltdown, Spectre v2, MDS) without treating v1 specifically are grade 1.
+
+</top>
+
+<top>
+<num> Number: 3
+<title> Meltdown CVE-2017-5754 reading kernel memory from user space
+
+<desc> Description:
+The Meltdown attack, which lets user processes read kernel memory through out-of-order execution, and its mitigations such as KPTI/KAISER.
+
+<narr> Narrative:
+Relevant: papers about Meltdown itself, its variants or kernel page-table isolation as a Meltdown defence. Generic surveys of microarchitectural attacks that discuss Meltdown in detail are 2; a passing mention is 1.
+
+</top>
+
+<top>
+<num> Number: 4
+<title> Rowhammer on DDR4 memory despite Target Row Refresh (TRR)
+
+<desc> Description:
+Rowhammer attacks or measurements on DDR4 DRAM, in particular those that bypass the in-DRAM TRR mitigation.
+
+<narr> Narrative:
+Relevant: Rowhammer on DDR4 and/or TRR. Rowhammer on DDR3 only, or on other memory types, is grade 1.
+
+</top>
+
+<top>
+<num> Number: 5
+<title> WannaCry ransomware spreading through the EternalBlue SMBv1 exploit (MS17-010)
+
+<desc> Description:
+Analyses of the WannaCry outbreak, its propagation via EternalBlue / MS17-010, or defences against it.
+
+<narr> Narrative:
+Relevant: papers analysing WannaCry or EternalBlue. Ransomware papers that only use WannaCry as a sample among many are grade 1.
+
+</top>
+
+<top>
+<num> Number: 6
+<title> side-channel attacks on CRYSTALS-Kyber implementations
+
+<desc> Description:
+Power, timing, electromagnetic or fault attacks against implementations of the Kyber / ML-KEM post-quantum KEM.
+
+<narr> Narrative:
+Relevant: attacks on or protections (masking, shuffling) for Kyber/ML-KEM implementations. Side-channel work on other lattice schemes (Dilithium, Saber, NewHope) only is grade 1.
+
+</top>
+
+<top>
+<num> Number: 7
+<title> Foreshadow L1 Terminal Fault (L1TF) attack on Intel SGX enclaves
+
+<desc> Description:
+The Foreshadow / L1TF transient execution attack that extracts secrets from SGX enclaves.
+
+<narr> Narrative:
+Relevant: papers on Foreshadow/L1TF or that evaluate SGX defences against it. Other SGX attacks (e.g. Plundervolt, SgxPectre) are grade 1.
+
+</top>
+
+<top>
+<num> Number: 8
+<title> replay attacks on TLS 1.3 0-RTT early data
+
+<desc> Description:
+Security of the 0-RTT (early data) mode of TLS 1.3, especially replay attacks and anti-replay mechanisms.
+
+<narr> Narrative:
+Relevant: analyses of 0-RTT/early data security in TLS 1.3 (or QUIC 0-RTT built on it). General TLS 1.3 analyses that do not discuss 0-RTT are grade 1.
+
+</top>
+
+<top>
+<num> Number: 9
+<title> Mirai botnet infection of IoT devices
+
+<desc> Description:
+Studies of the Mirai botnet or its variants and how they compromise IoT devices.
+
+<narr> Narrative:
+Relevant: measurement, analysis or detection of Mirai and Mirai-derived botnets. IoT botnet papers that only cite Mirai as motivation are grade 1.
+
+</top>
+
+<top>
+<num> Number: 10
+<title> nonce reuse forgery attacks on AES-GCM
+
+<desc> Description:
+Attacks that exploit repeated nonces in AES-GCM authenticated encryption, and nonce-misuse-resistant alternatives such as AES-GCM-SIV.
+
+<narr> Narrative:
+Relevant: GCM nonce-reuse attacks, measurements of nonce reuse, or nonce-misuse-resistant modes positioned against GCM. General AEAD papers without GCM nonce reuse are grade 1.
+
+</top>
+
+<top>
+<num> Number: 11
+<title> backdoor attacks on neural network classifiers (not cryptographic backdoors)
+
+<desc> Description:
+Trojan/backdoor attacks that implant a trigger into a machine learning model, and defences against them.
+
+<narr> Narrative:
+Relevant: ML backdoor/trojan attacks or defences. Backdoors in cryptographic algorithms, random number generators or software are 0.
+
+</top>
+
+<top>
+<num> Number: 12
+<title> padding oracle attacks on CBC mode encryption
+
+<desc> Description:
+Attacks that decrypt CBC ciphertexts by observing whether the receiver accepts the padding.
+
+<narr> Narrative:
+Relevant: padding oracle attacks or defences (e.g. Lucky 13-style variants). Random oracle model or blockchain oracle papers are 0.
+
+</top>
+
+<top>
+<num> Number: 13
+<title> security proofs in the random oracle model
+
+<desc> Description:
+Cryptographic constructions whose security is proven by modelling a hash function as a random oracle, or work on the limits of that model.
+
+<narr> Narrative:
+Relevant: proofs in the ROM/QROM or analyses of the model itself. Padding oracles and blockchain oracles are 0.
+
+</top>
+
+<top>
+<num> Number: 14
+<title> blockchain oracles feeding off-chain data to smart contracts
+
+<desc> Description:
+Oracle services that bring external data onto a blockchain, and attacks on them such as price-oracle manipulation.
+
+<narr> Narrative:
+Relevant: design or security of blockchain/DeFi oracles, oracle manipulation attacks. Cryptographic oracles (padding, random oracle) are 0.
+
+</top>
+
+<top>
+<num> Number: 15
+<title> DNS cache poisoning by off-path attackers
+
+<desc> Description:
+Attacks that insert forged records into DNS resolver caches, and defences such as source-port randomisation or DNSSEC.
+
+<narr> Narrative:
+Relevant: DNS cache poisoning attacks or defences. Data poisoning of ML models is 0. ARP poisoning is 1.
+
+</top>
+
+<top>
+<num> Number: 16
+<title> poisoning the training data of machine learning models
+
+<desc> Description:
+Attacks that corrupt a model by injecting malicious samples into its training set, and defences.
+
+<narr> Narrative:
+Relevant: training-data poisoning (including in federated learning). DNS or ARP cache poisoning is 0. Backdoor attacks that work through poisoned data are 2.
+
+</top>
+
+<top>
+<num> Number: 17
+<title> access tokens for authentication in web APIs such as OAuth and JWT
+
+<desc> Description:
+Security of bearer/access tokens used to authenticate clients to web services.
+
+<narr> Narrative:
+Relevant: OAuth/OpenID Connect tokens, JWTs, session tokens and attacks on them. Cryptocurrency tokens and LLM tokens are 0.
+
+</top>
+
+<top>
+<num> Number: 18
+<title> shadow stacks for protecting return addresses
+
+<desc> Description:
+Shadow stack defences (software or hardware such as Intel CET) that protect return addresses against control-flow hijacking.
+
+<narr> Narrative:
+Relevant: design, evaluation or bypass of shadow stacks. 'Shadow models' in membership inference are 0. General CFI without a shadow stack is 1.
+
+</top>
+
+<top>
+<num> Number: 19
+<title> browser fingerprinting to track users without cookies
+
+<desc> Description:
+Identifying or tracking web users through the attributes of their browser and device.
+
+<narr> Narrative:
+Relevant: browser/device fingerprinting for tracking and defences against it. Biometric fingerprints and website fingerprinting on Tor traffic are 0.
+
+</top>
+
+<top>
+<num> Number: 20
+<title> spoofing attacks on fingerprint biometric sensors
+
+<desc> Description:
+Presentation attacks with fake fingers against fingerprint recognition, and liveness detection.
+
+<narr> Narrative:
+Relevant: fingerprint presentation attacks / liveness detection. Browser fingerprinting, website fingerprinting and other biometrics only are 0.
+
+</top>
+
+<top>
+<num> Number: 21
+<title> intrusion detection methods that do not use deep learning
+
+<desc> Description:
+Network or host intrusion detection approaches based on rules, statistics or classical machine learning, not deep neural networks.
+
+<narr> Narrative:
+Relevant: IDS methods without deep learning. A deep-learning IDS is grade 1 (on topic but breaks the exclusion). Papers that compare against deep learning but propose a non-deep method are 2/3.
+
+</top>
+
+<top>
+<num> Number: 22
+<title> Android malware detection without dynamic analysis
+
+<desc> Description:
+Detecting Android malware purely by static analysis of the app, without executing it.
+
+<narr> Narrative:
+Relevant: static-only Android malware detection. Methods that run the app (dynamic or hybrid analysis) are grade 1.
+
+</top>
+
+<top>
+<num> Number: 23
+<title> post-quantum signature schemes that are not lattice-based
+
+<desc> Description:
+Hash-based, code-based, multivariate, isogeny-based or other non-lattice post-quantum signatures.
+
+<narr> Narrative:
+Relevant: design or analysis of non-lattice PQ signatures (SPHINCS+, XMSS, UOV, SQIsign...). Lattice signatures (Dilithium, Falcon) are grade 1.
+
+</top>
+
+<top>
+<num> Number: 24
+<title> privacy-preserving machine learning without homomorphic encryption
+
+<desc> Description:
+Private training or inference using techniques such as secure multi-party computation, differential privacy or trusted hardware instead of HE.
+
+<narr> Narrative:
+Relevant: privacy-preserving ML that does not rely on homomorphic encryption. HE-based approaches are grade 1.
+
+</top>
+
+<top>
+<num> Number: 25
+<title> phishing website detection without URL-based features
+
+<desc> Description:
+Detecting phishing pages from their content, visual appearance or behaviour rather than from the URL string.
+
+<narr> Narrative:
+Relevant: phishing detection using page content/visual/behaviour features. Methods relying on URL features are grade 1.
+
+</top>
+
+<top>
+<num> Number: 26
+<title> side-channel attacks that do not need physical access to the device
+
+<desc> Description:
+Remote or software-only side-channel attacks, e.g. timing over the network, cache attacks from co-located code, or software-based power measurement.
+
+<narr> Narrative:
+Relevant: side channels mounted without physical access. Attacks needing probes, oscilloscopes or physical proximity are grade 1.
+
+</top>
+
+<top>
+<num> Number: 27
+<title> smart contract vulnerability detection without symbolic execution
+
+<desc> Description:
+Finding bugs in smart contracts with static analysis, fuzzing, machine learning or formal methods other than symbolic execution.
+
+<narr> Narrative:
+Relevant: non-symbolic-execution vulnerability detection for smart contracts. Symbolic execution tools (Oyente, Mythril-style) are grade 1.
+
+</top>
+
+<top>
+<num> Number: 28
+<title> user authentication that does not use passwords
+
+<desc> Description:
+Authentication schemes based on tokens, biometrics, FIDO2/WebAuthn, behavioural signals or other non-password factors.
+
+<narr> Narrative:
+Relevant: authentication without passwords. Password-based schemes, password managers or password strength are grade 1.
+
+</top>
+
+<top>
+<num> Number: 29
+<title> anonymous communication systems that are not based on Tor
+
+<desc> Description:
+Anonymity networks and protocols other than Tor, such as mixnets, DC-nets or I2P.
+
+<narr> Narrative:
+Relevant: non-Tor anonymous communication. Papers about Tor itself are grade 1.
+
+</top>
+
+<top>
+<num> Number: 30
+<title> fuzzing approaches that do not rely on code coverage feedback
+
+<desc> Description:
+Black-box, generation-based or other fuzzers that do not use coverage guidance.
+
+<narr> Narrative:
+Relevant: fuzzers without coverage feedback. Coverage-guided (greybox) fuzzers are grade 1.
+
+</top>
+
+<top>
+<num> Number: 31
+<title> attacks on TLS 1.3 published after its 2018 standardisation
+
+<desc> Description:
+Attacks on or security analyses of TLS 1.3 that appeared after RFC 8446 (August 2018).
+
+<narr> Narrative:
+Relevant: TLS 1.3 attacks/analyses first posted in 2019 or later. Matching papers from 2018 or earlier are grade 1. The annotator can see the date.
+
+</top>
+
+<top>
+<num> Number: 32
+<title> prompt injection attacks on LLM-integrated applications published since 2023
+
+<desc> Description:
+Direct or indirect prompt injection against applications built on large language models.
+
+<narr> Narrative:
+Relevant: prompt injection papers from 2023 onwards. Older matching papers are grade 1 (unlikely to exist).
+
+</top>
+
+<top>
+<num> Number: 33
+<title> ransomware detection published before 2018
+
+<desc> Description:
+Early work on detecting crypto-ransomware, e.g. via file-system activity or entropy.
+
+<narr> Narrative:
+Relevant: ransomware detection papers first posted in 2016 or 2017. Later ones are grade 1.
+
+</top>
+
+<top>
+<num> Number: 34
+<title> security of 5G authentication and key agreement published after 2019
+
+<desc> Description:
+Formal or practical analyses of 5G-AKA and related 5G authentication protocols.
+
+<narr> Narrative:
+Relevant: 5G authentication analyses from 2020 onwards. Earlier ones (2016-2019) are grade 1. 4G/LTE only is grade 1.
+
+</top>
+
+<top>
+<num> Number: 35
+<title> new transient execution attacks published after 2020
+
+<desc> Description:
+Spectre/Meltdown-style transient execution attack variants that appeared from 2021 onwards.
+
+<narr> Narrative:
+Relevant: new transient execution attacks first posted 2021 or later. Earlier ones are grade 1; defences only are grade 1.
+
+</top>
+
+<top>
+<num> Number: 36
+<title> adversarial examples against malware classifiers published before 2019
+
+<desc> Description:
+Early evasion attacks that modify malware so that ML-based detectors misclassify it.
+
+<narr> Narrative:
+Relevant: adversarial malware papers first posted in 2016-2018. Later ones are grade 1.
+
+</top>
+
+<top>
+<num> Number: 37
+<title> privacy of COVID-19 contact tracing apps published in 2020
+
+<desc> Description:
+Privacy analyses and designs of Bluetooth or GPS-based contact tracing apps posted during 2020.
+
+<narr> Narrative:
+Relevant: contact tracing privacy papers first posted in 2020. Those from 2021 or later are grade 1.
+
+</top>
+
+<top>
+<num> Number: 38
+<title> membership inference attacks on large language models published since 2023
+
+<desc> Description:
+Determining whether text was in an LLM's training data.
+
+<narr> Narrative:
+Relevant: membership inference on LLMs from 2023 onwards. Older or non-LLM membership inference papers are grade 1.
+
+</top>
+
+<top>
+<num> Number: 39
+<title> cryptojacking browser mining malware published between 2018 and 2020
+
+<desc> Description:
+Unauthorised cryptocurrency mining in browsers or on compromised machines.
+
+<narr> Narrative:
+Relevant: cryptojacking papers first posted 2018-2020 inclusive. Others are grade 1.
+
+</top>
+
+<top>
+<num> Number: 40
+<title> deployment of post-quantum key exchange in TLS published after 2022
+
+<desc> Description:
+Experiments and measurements of hybrid or post-quantum key exchange in TLS/QUIC.
+
+<narr> Narrative:
+Relevant: PQ key exchange in TLS from 2023 onwards. Earlier ones are grade 1.
+
+</top>
+
+<top>
+<num> Number: 41
+<title> inferring which websites a user visits from encrypted traffic patterns
+
+<desc> Description:
+Website fingerprinting: identifying visited pages from the size and timing of encrypted (e.g. Tor) traffic.
+
+<narr> Narrative:
+Relevant: website fingerprinting attacks or defences. Browser fingerprinting is 0.
+
+</top>
+
+<top>
+<num> Number: 42
+<title> telling whether a particular person's record was used to train a model
+
+<desc> Description:
+Membership inference attacks against machine learning models and defences.
+
+<narr> Narrative:
+Relevant: membership inference. Attribute inference or model inversion only is grade 1.
+
+</top>
+
+<top>
+<num> Number: 43
+<title> copying a deployed model by repeatedly querying its prediction interface
+
+<desc> Description:
+Model extraction / model stealing through prediction APIs.
+
+<narr> Narrative:
+Relevant: model extraction or stealing attacks and defences. Membership inference only is grade 1.
+
+</top>
+
+<top>
+<num> Number: 44
+<title> tiny changes to an input that make a classifier give the wrong answer
+
+<desc> Description:
+Adversarial examples (evasion attacks) against neural networks and robustness to them.
+
+<narr> Narrative:
+Relevant: adversarial example attacks or defences. Training-data poisoning is grade 1.
+
+</top>
+
+<top>
+<num> Number: 45
+<title> recovering secret keys by measuring how long cryptographic operations take
+
+<desc> Description:
+Timing side-channel attacks on cryptographic implementations and constant-time defences.
+
+<narr> Narrative:
+Relevant: timing attacks or constant-time programming/verification. Power/EM side channels only are grade 1.
+
+</top>
+
+<top>
+<num> Number: 46
+<title> tricking a chatbot into ignoring its safety rules
+
+<desc> Description:
+Jailbreak attacks against safety-aligned large language models and defences.
+
+<narr> Narrative:
+Relevant: LLM jailbreaks or jailbreak defences. Prompt injection against applications is grade 2 if it bypasses safety rules, otherwise 1.
+
+</top>
+
+<top>
+<num> Number: 47
+<title> hiding secret messages inside images so nobody notices
+
+<desc> Description:
+Image steganography and its detection (steganalysis).
+
+<narr> Narrative:
+Relevant: image steganography or steganalysis. Watermarking is grade 1.
+
+</top>
+
+<top>
+<num> Number: 48
+<title> programs that lock a victim's files and demand payment to unlock them
+
+<desc> Description:
+Ransomware: analysis, detection and recovery.
+
+<narr> Narrative:
+Relevant: ransomware papers of any kind. General malware papers are grade 1.
+
+</top>
+
+<top>
+<num> Number: 49
+<title> training a shared model on many phones without collecting their raw data while keeping each phone's update private
+
+<desc> Description:
+Privacy in federated learning, e.g. secure aggregation or differentially private federated learning.
+
+<narr> Narrative:
+Relevant: privacy protection of client updates in federated learning. Federated learning without a privacy mechanism, or attacks only, are grade 1.
+
+</top>
+
+<top>
+<num> Number: 50
+<title> checking that the software running on a remote device has not been tampered with
+
+<desc> Description:
+Remote attestation of software integrity on IoT devices, servers or enclaves.
+
+<narr> Narrative:
+Relevant: remote attestation schemes or their analysis. Secure boot only is grade 1.
+
+</top>
+

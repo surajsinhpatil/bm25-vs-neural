@@ -1,0 +1,236 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1.8cm,top=1.5cm,bottom=1.7cm]{geometry}
+\usepackage[T1]{fontenc}
+\IfFileExists{lmodern.sty}{\usepackage{lmodern}}{\usepackage{mathptmx}}
+\usepackage{microtype,booktabs,graphicx,xcolor,tabularx,amsmath,enumitem}
+\usepackage[font=small,labelfont=bf,skip=3pt]{caption}
+\usepackage{float,placeins}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,backgrounds}
+\usepackage[colorlinks,urlcolor=blue!60!black,linkcolor=black,citecolor=black]{hyperref}
+\setlist{nosep,leftmargin=1.2em}
+\setlength{\parskip}{2pt}
+\setlength{\parindent}{0pt}
+\setlength{\textfloatsep}{6pt}
+\setlength{\floatsep}{5pt}
+\setlength{\intextsep}{5pt}
+
+% ---------------------------------------------------------------------------- set these
+\newcommand{\repourl}{\textcolor{red}{https://github.com/TODO/bm25-vs-neural}}  % <-- your GitHub repository
+% --------------------------------------------------------------------------------------
+\IfFileExists{tables/macros.tex}{\input{tables/macros.tex}}{}
+\newcommand{\inputor}[2]{\IfFileExists{#1}{\input{#1}}{#2}}
+\newcommand{\pending}[1]{\textcolor{red!70!black}{[#1]}}
+\newcommand{\st}[1]{\textsf{\small #1}}
+
+\begin{document}
+\begin{center}
+{\Large\bfseries Domain-Specific Search: BM25 vs.\ Neural Retrieval on Technical Documents}\\[2pt]
+{\large Intermediate Status Update \;|\; Information Retrieval \;|\; Group 10 \;|\; 25 October 2026}\\[4pt]
+\begin{tabular}{llll}
+Surajsinh Patil & 2025H1030058P & Tejas Mahajan & 2025H1030057P\\
+Swayam Kumud & 2025H1030063P & Saksham Singhal & 2025H1030208P
+\end{tabular}\\[3pt]
+\textbf{Repository:} \repourl
+\end{center}
+
+% ======================================================================================
+\section{Implementation status and architecture}
+We compare our own BM25 implementation with two dense retrievers used without fine-tuning
+(E5-base-v2 and SPECTER2) and their Reciprocal Rank Fusion hybrids on a frozen corpus of
+\corpusN{} arXiv cs.CR abstracts, using 50 queries in five categories (exact identifier,
+homonym, negation, time constraint, paraphrase). The whole pipeline is implemented, unit-tested
+and runs end to end; Table~\ref{tab:status} lists the components.
+
+\begin{table}[H]
+\centering\small
+\caption{Components built so far versus pending. Every built component has unit tests
+(23 tests: BM25 against the formula, metrics against \texttt{pytrec\_eval}, kappa against scikit-learn, fusion, pooling).}
+\label{tab:status}
+\begin{tabularx}{\linewidth}{@{}l l X@{}}
+\toprule
+Component & Status & Notes\\
+\midrule
+Corpus builder (\texttt{corpus.py}) & done, frozen & \corpusN{} docs, SHA-256 \texttt{\corpusSha}; arXiv id list committed\\
+Identifier-aware tokeniser + BM25 & done, validated & SciPy sparse matrix, vectorised scoring; matches Lucene (Sec.~\ref{sec:val})\\
+Dense encoders + exact search & done & E5 (mean pooling, prefixes), SPECTER2 (proximity / ad-hoc query adapters)\\
+RRF hybrids ($k{=}60$) & done & BM25+E5, BM25+SPECTER2 over top-100\\
+Metrics, significance, CIs & done, validated & nDCG, P, MRR, MAP, R, Hole@10; permutation test + Holm; bootstrap CIs\\
+Query set (50 + 5 practice) & done & TREC format; \anchorsFound{} anchors confirmed in corpus, \anchorsMissing{} being confirmed\\
+Pooling + blind judging tool & done & \poolSize{} pairs ($\approx$\poolPerQ{}/query), 2 judges/query, offline HTML page\\
+Relevance judging & \textbf{in progress} & phase 1 (any run's top-5, \poolPrio{} pairs) first \pending{update}\\
+k1/b sweep, CV, token ablation & code done & runs as soon as the qrels are frozen\\
+Stretch S1--S4 & code done & cross-encoder, date filter, LLM judge, CC fusion (Sec.~\ref{sec:path})\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\textbf{Changes from the proposal.}
+(1) The Pyserini check builds a Lucene index from exactly the same title+abstract text, so the
+two BM25s differ only in the implementation.
+(2) E5 is run through \texttt{transformers} with our own mean pooling, because
+\texttt{sentence-transformers} and the \texttt{adapters} library needed by SPECTER2 require
+incompatible library versions; a test checks the pooling against a manual computation.
+(3) Besides validating BM25 on SciFact we run \emph{all five} systems there, which gives
+judged results before our own judgments are finished.
+(4) A judgment-free analysis of top-10 overlap between systems was added.
+(5) For S2 we first use a rule-based date extractor (no API cost); the LLM extractor is optional.
+Figure~\ref{fig:arch} shows the updated architecture.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[font=\scriptsize, node distance=3mm and 4mm,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=6.5mm, fill=white, inner sep=2pt},
+  done/.style={box, fill=blue!7}, todo/.style={box, dashed},
+  arr/.style={-{Stealth[length=1.6mm]}, thin}]
+\node[done] (snap) {arXiv snapshot\\(Kaggle)};
+\node[done, right=of snap] (corp) {filter cs.CR 2016--25,\\clean, dedupe, sample\\$\Rightarrow$ frozen JSONL + SHA};
+\node[done, right=of corp] (tok) {identifier-aware\\analyzer + Porter};
+\node[done, right=of tok] (bm) {BM25 (ours)\\sparse matrix};
+\node[done, below=of bm] (e5) {E5-base-v2\\exact cosine};
+\node[done, below=of e5] (sp) {SPECTER2\\exact cosine};
+\node[done, right=of e5] (rrf) {RRF $k{=}60$\\BM25+E5\\BM25+SPECTER2};
+\node[done, right=of rrf] (pool) {pool top-10\\of 5 runs};
+\node[box, fill=orange!12, above=of pool] (judge) {blind judging\\2 annotators};
+\node[todo, right=of judge] (qrels) {frozen qrels\\$\kappa$ reported};
+\node[todo, below=of qrels] (eval) {metrics, permutation\\tests, per category,\\sweep, ablation};
+\node[todo, below=of eval] (str) {stretch S1--S4\\+ extra judging round};
+\node[done, below=of corp] (q) {50 queries\\TREC topics};
+\node[done, below=of q] (val) {SciFact validation:\\BM25 vs Lucene,\\metrics vs pytrec\_eval};
+\draw[arr] (snap)--(corp); \draw[arr] (corp)--(tok); \draw[arr] (tok)--(bm);
+\draw[arr] (corp.south east) to[out=-30,in=180] (e5.west); \draw[arr] (corp.south east) to[out=-40,in=180] (sp.west);
+\draw[arr] (bm.east) to[out=0,in=110] (rrf.north); \draw[arr] (e5)--(rrf); \draw[arr] (sp.east) to[out=0,in=-110] (rrf.south);
+\draw[arr] (rrf)--(pool); \draw[arr] (pool)--(judge); \draw[arr] (judge)--(qrels); \draw[arr] (qrels)--(eval); \draw[arr] (eval)--(str);
+\draw[arr] (q.east) -- ++(1.1,0) |- (e5.west);
+\end{tikzpicture}
+\caption{Updated architecture. Shaded = implemented and run; orange = in progress; dashed = code
+written and tested, waiting for the frozen qrels. Each stage is frozen before the next starts.}
+\label{fig:arch}
+\end{figure}
+
+% ======================================================================================
+\section{IR pipeline details}
+\textbf{Corpus and preprocessing.} From the Kaggle arXiv snapshot we keep papers with cs.CR as
+primary or cross-listed category and a first version in 2016--2025 (\corpusInCat{} cs.CR records
+in the snapshot, \corpusFiltered{} after filtering; \corpusWithdrawn{} withdrawn and
+\corpusDup{} duplicate titles removed), strip LaTeX, apply NFKC normalisation and sample
+\corpusN{} documents with a fixed seed (\corpusPrimary{} have cs.CR as primary category).
+A document is its title plus abstract.
+
+\textbf{BM25 (lexical).} The identifier-aware analyzer lower-cases, joins protocol versions
+(``TLS v1.3'' $\to$ \texttt{tls1.3}), keeps identifiers such as \texttt{cve-2021-44228},
+\texttt{sha-256} or \texttt{x86-64} as single unstemmed tokens and also indexes their parts,
+which do not count towards document length (like Lucene's overlapping tokens). Other words
+pass through Lucene's 33 English stopwords and the Porter stemmer. Note that ``no'' and ``not''
+are stopwords, so BM25 cannot see negation at all. Term frequencies are stored once in a SciPy
+CSC matrix (\bmVocab{} terms); for given $(k_1,b)$ the whole BM25-weighted matrix is computed in
+one vectorised step with the Lucene IDF $\ln(1+\frac{N-n_t+0.5}{n_t+0.5})$, and a query is
+scored with one sparse matrix--vector product. The main run uses $k_1{=}1.2$, $b{=}0.75$.
+
+\textbf{Dense retrieval.} Both models are BERT-base (768 dimensions), used as published.
+E5 uses the \texttt{query:}/\texttt{passage:} prefixes and mean pooling; SPECTER2 encodes
+``title [SEP] abstract'' with its proximity adapter and queries with its ad-hoc query adapter
+([CLS] vector). Documents are sorted by length for batching (fp16 on a \gpuName{}); \truncEfive\%
+(E5) and \truncSpec\% (SPECTER2) of the documents exceed 512 tokens and are truncated.
+Embeddings are cached and searched exactly (brute-force cosine), so no ANN approximation error
+enters the comparison. \textbf{Hybrids} use RRF ($k{=}60$, fixed beforehand) over the top-100 of
+each run, so no score normalisation and no tuning on our queries is needed.
+
+\textbf{Judging and evaluation.} The top-10 of all five runs is pooled. Each query goes to two
+of the four annotators (25 queries, $\approx$\,750 judgments each, every annotator pair shares
+queries so $\kappa$ covers all pairs). The judging page shows documents in random order with no
+system or rank, shows dates only for time queries, saves progress in the browser and exports JSON.
+Disagreements are listed for an adjudication meeting and the qrels are then frozen with a checksum.
+Metrics follow \texttt{trec\_eval} conventions (ties broken by docid, unjudged = non-relevant,
+binary metrics at grade $\geq 2$). Significance: paired randomisation test (100k permutations,
+exact enumeration for $n\leq 16$) with Holm--Bonferroni; per-category means get 95\% bootstrap CIs.
+
+% ======================================================================================
+\section{Preliminary evaluation results}\label{sec:val}
+\textbf{Validation (success criteria i and ii).} On BEIR SciFact with identical settings
+($k_1{=}0.9$, $b{=}0.4$, Lucene-like analyzer) our BM25 differs from Pyserini by
+$\Delta$nDCG@10 $=$ \sciDiff{} (criterion~i \sciCritI{}, threshold 0.01) and shares
+\sciOverlap\% of its top-10 documents. Our metric code reproduces \texttt{pytrec\_eval} on every
+run and query (criterion~ii \sciCritII{}). The same check on an offline \reuDocs-document
+collection gave $\Delta$nDCG@10 $=$ \reuDiff{}, \reuOverlap\% top-10 overlap, and a score ratio
+of \reuRatio{} to Lucene, i.e.\ exactly the constant $(k_1{+}1)$ that Lucene omits; the small
+remaining differences come from Lucene's lossy encoding of document length.
+
+\inputor{tables/scifact.tex}{\begin{table}[h]\centering\small\caption{BEIR SciFact results.}\label{tab:scifact}
+\pending{generated by \texttt{scripts/validate\_scifact.py --dense} (Kaggle notebook, section 2)}\end{table}}
+
+\textbf{First comparison (SciFact).} Table~\ref{tab:scifact} gives the first judged comparison of
+all five systems against the BM25 baseline (nDCG@10: BM25 \sciBM{}, E5 \sciEfive{}, SPECTER2
+\sciSpec{}, BM25+E5 \sciHybE{}, BM25+SPECTER2 \sciHybS{}). SciFact is a scientific but not a
+security collection, so it shows that the components behave as published; our research
+questions are answered on the cs.CR collection.
+\pending{Add one or two sentences on what the SciFact numbers show once they are in.}
+
+\textbf{cs.CR collection without judgments.} Table~\ref{tab:overlap} shows how different the
+systems' top-10 lists are: BM25 and E5 share \ovBE{} of their top-10 on average (\ovBEId{} on
+identifier queries, \ovBEPara{} on paraphrases), BM25 and SPECTER2 \ovBS{}, the two dense models
+\ovES{}. Low overlap means the pool is not dominated by one family and that fusion has
+complementary evidence to combine. Table~\ref{tab:eff} reports time and memory.
+\IfFileExists{tables/main_results-prelim.tex}{%
+\textbf{Preliminary cs.CR results.} Table~\ref{tab:main-prelim} and Figure~\ref{fig:cat} use the
+judgments exported so far, with disagreements resolved to the lower grade and unjudged documents
+counted as non-relevant (see Hole@10). They are exploratory and will change once judging is
+complete and adjudicated. \pending{One or two sentences on what they suggest, without claims of significance.}
+\input{tables/main_results-prelim.tex}
+\IfFileExists{figures/per_category-prelim.pdf}{\begin{figure}[t]\centering
+\includegraphics[width=\linewidth]{figures/per_category-prelim.pdf}
+\caption{Preliminary nDCG@10 per query category with 95\% bootstrap CIs (10 queries each; hatched = hybrids).}
+\label{fig:cat}\end{figure}}{}}{}%
+\inputor{tables/overlap.tex}{\begin{table}[h]\centering\small\caption{Top-10 overlap.}\label{tab:overlap}\pending{generated by \texttt{scripts/run\_overlap.py}}\end{table}}
+\inputor{tables/efficiency_prelim.tex}{\begin{table}[h]\centering\small\caption{Efficiency.}\label{tab:eff}\pending{generated by \texttt{scripts/make\_report\_macros.py}}\end{table}}
+
+% ======================================================================================
+\FloatBarrier
+\section{Path to final submission}\label{sec:path}
+\begin{table}[H]
+\centering\small
+\caption{Plan for the remaining work (final submission mid-November).}
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+\toprule
+Dates & Work\\
+\midrule
+26--31 Oct & Finish judging (phase 2: ranks 6--10); compute $\kappa$ (target $\geq 0.6$, otherwise
+revise guidelines and redo affected queries); adjudication meeting; freeze qrels.\\
+1--4 Nov & Main results (RQ1, RQ3, RQ4) with significance tests; per-category analysis with CIs (RQ2);
+k1/b sweep with 5-fold CV and tokenisation ablation (RQ5); check our pre-registered expectations.\\
+5--9 Nov & Stretch goals S1 (cross-encoder re-ranking of the best run's top-100) and S2
+(date filter on time queries); judge their new documents in an extra blind round.\\
+9--12 Nov & Error analysis and case studies per category; S3/S4 if time allows.\\
+12--15 Nov & Final report, figures, release code, queries, qrels and runs; demo preparation.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+\textbf{Stretch objectives.} All four are implemented and tested on a synthetic end-to-end run;
+none has been run on real data yet. \textbf{S1} re-ranks the top-100 with
+\texttt{ms-marco-MiniLM-L-6-v2}; we expect gains mainly on negation queries. \textbf{S2} parses
+date ranges (``after its 2018 standardisation'' $\to$ $\geq$2019) and filters on the first-version
+date; the rules already parse all 10 time queries. \textbf{S3} grades the same pool with an
+LLM through any OpenAI-compatible endpoint and reports $\kappa$ and Kendall's $\tau$ of the system
+ranking. \textbf{S4} tunes a convex combination of min-max normalised scores with stratified
+5-fold CV. Order of priority is unchanged: S1, S2, then S3/S4.
+\textbf{Risks.} Judging time (mitigated by phase-1 ordering); queries without a confirmed relevant
+document (replaced via random abstracts, never via our systems); possible training-data overlap
+of the dense models with arXiv abstracts (reported as a limitation).
+
+% ======================================================================================
+\section{Contribution matrix}
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+\toprule
+Member & Components owned and completed to date\\
+\midrule
+Surajsinh Patil & \pending{e.g.\ BM25 implementation, identifier-aware tokeniser, validation against Pyserini}\\
+Tejas Mahajan & \pending{e.g.\ corpus builder and query set}\\
+Swayam Kumud & \pending{e.g.\ dense encoders, GPU encoding, RRF}\\
+Saksham Singhal & \pending{e.g.\ evaluation, significance tests, judging tool}\\
+All & Query writing and review, relevance judging (two annotators per query)\\
+\bottomrule
+\end{tabularx}
+\end{table}
+\end{document}

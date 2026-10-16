@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relevance Judging</title>
+<style>
+  :root { --bg:#f7f7f5; --card:#fff; --ink:#1d1d1b; --muted:#6b6b66; --line:#e2e1dc;
+          --accent:#2f5d8a; --g0:#9b3b3b; --g1:#a8762a; --g2:#3d7a4e; --g3:#1f5c3a; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--ink); }
+  header { position:sticky; top:0; z-index:2; background:var(--card); border-bottom:1px solid var(--line);
+           padding:10px 16px; display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+  header h1 { font-size:16px; margin:0 12px 0 0; }
+  .bar { flex:1; min-width:160px; height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
+  .bar > div { height:100%; background:var(--accent); width:0; }
+  button { font:inherit; border:1px solid var(--line); background:var(--card); padding:6px 12px; border-radius:6px; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  main { max-width:1100px; margin:0 auto; padding:16px; display:grid; grid-template-columns: 1fr 320px; gap:16px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .q { font-size:18px; font-weight:600; margin:0 0 6px; }
+  .label { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-top:10px; }
+  .doc-title { font-size:17px; font-weight:600; margin:0 0 8px; }
+  .abstract { white-space:pre-wrap; }
+  .meta { color:var(--muted); font-size:13px; margin-bottom:8px; }
+  .grades { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:16px; }
+  .grades button { padding:10px 6px; text-align:left; }
+  .grades button b { display:block; font-size:16px; }
+  .grades button.sel[data-g="0"] { background:var(--g0); color:#fff; }
+  .grades button.sel[data-g="1"] { background:var(--g1); color:#fff; }
+  .grades button.sel[data-g="2"] { background:var(--g2); color:#fff; }
+  .grades button.sel[data-g="3"] { background:var(--g3); color:#fff; }
+  .nav { display:flex; gap:8px; margin-top:12px; align-items:center; flex-wrap:wrap; }
+  .muted { color:var(--muted); font-size:13px; }
+  kbd { border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 4px; font-size:12px; }
+  .phase { display:inline-block; font-size:12px; padding:2px 8px; border-radius:10px; background:#e8eef5; color:var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Relevance judging &mdash; <span id="who"></span></h1>
+  <span id="count" class="muted"></span>
+  <div class="bar"><div id="prog"></div></div>
+  <button id="nextUnjudged" title="Jump to the next document without a grade">Next unjudged</button>
+  <button id="export">Export judgments</button>
+  <label class="muted"><input type="file" id="import" accept=".json" style="display:none">
+    <button onclick="document.getElementById('import').click()">Import</button></label>
+</header>
+<main>
+  <section class="card">
+    <div class="meta"><span class="phase" id="phase"></span> &nbsp; Item <span id="pos"></span></div>
+    <h2 class="doc-title" id="title"></h2>
+    <div class="meta" id="date"></div>
+    <div class="abstract" id="abstract"></div>
+    <div class="grades">
+      <button data-g="0"><b>0</b>Not relevant</button>
+      <button data-g="1"><b>1</b>On topic, but does not answer the query or breaks a condition</button>
+      <button data-g="2"><b>2</b>Relevant</button>
+      <button data-g="3"><b>3</b>Highly relevant</button>
+    </div>
+    <div class="nav">
+      <button id="prev">&larr; Previous</button>
+      <button id="next">Next &rarr;</button>
+      <span class="muted">Keys: <kbd>0</kbd>&ndash;<kbd>3</kbd> grade and advance, <kbd>&larr;</kbd>/<kbd>&rarr;</kbd> move.
+        Work is saved in this browser automatically; export regularly as a backup.</span>
+    </div>
+  </section>
+  <aside class="card">
+    <div class="label">Query <span id="qid"></span></div>
+    <p class="q" id="query"></p>
+    <div class="label">Description</div>
+    <p id="desc"></p>
+    <div class="label">What counts as relevant</div>
+    <p id="narr"></p>
+  </aside>
+</main>
+<script>
+const DATA = /*__DATA__*/null;
+const KEY = "irjudge:" + DATA.annotator + ":" + DATA.round;
+const items = DATA.items;
+let grades = {};
+try { grades = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { grades = {}; }
+let i = 0;
+const k = it => it.qid + "\t" + it.docid;
+const $ = id => document.getElementById(id);
+
+function save() { try { localStorage.setItem(KEY, JSON.stringify(grades)); } catch (e) {} }
+function done() { return items.filter(it => grades[k(it)] !== undefined).length; }
+function render() {
+  const it = items[i];
+  $("who").textContent = DATA.annotator + " (" + DATA.round + ")";
+  $("pos").textContent = (i + 1) + " / " + items.length;
+  $("phase").textContent = it.phase === 1 ? "Phase 1 (judge first)" : "Phase 2";
+  $("title").textContent = it.title;
+  $("abstract").textContent = it.abstract;
+  $("date").textContent = it.show_date ? "First version: " + it.date : "";
+  $("qid").textContent = it.qid;
+  $("query").textContent = it.query;
+  $("desc").textContent = it.description;
+  $("narr").textContent = it.narrative;
+  const g = grades[k(it)];
+  document.querySelectorAll(".grades button").forEach(b => b.classList.toggle("sel", String(g) === b.dataset.g));
+  const n = done();
+  $("count").textContent = n + " of " + items.length + " judged";
+  $("prog").style.width = (100 * n / items.length) + "%";
+}
+function setGrade(g) { grades[k(items[i])] = g; save(); if (i < items.length - 1) i++; render(); }
+document.querySelectorAll(".grades button").forEach(b => b.onclick = () => setGrade(+b.dataset.g));
+$("prev").onclick = () => { if (i > 0) i--; render(); };
+$("next").onclick = () => { if (i < items.length - 1) i++; render(); };
+$("nextUnjudged").onclick = () => {
+  for (let s = 1; s <= items.length; s++) { const j = (i + s) % items.length;
+    if (grades[k(items[j])] === undefined) { i = j; break; } }
+  render();
+};
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if ("0123".includes(e.key) && e.key.length === 1) setGrade(+e.key);
+  else if (e.key === "ArrowRight") { if (i < items.length - 1) i++; render(); }
+  else if (e.key === "ArrowLeft") { if (i > 0) i--; render(); }
+});
+$("export").onclick = () => {
+  const out = { annotator: DATA.annotator, round: DATA.round, exported: new Date().toISOString(),
+    judgments: items.map(it => ({ qid: it.qid, docid: it.docid, grade: grades[k(it)] ?? null })) };
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: "application/json" }));
+  a.download = "judgments_" + DATA.annotator + "_" + DATA.round + ".json";
+  a.click();
+};
+$("import").onchange = ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  f.text().then(t => { const d = JSON.parse(t);
+    d.judgments.forEach(j => { if (j.grade !== null && j.grade !== undefined) grades[j.qid + "\t" + j.docid] = j.grade; });
+    save(); render(); });
+};
+// start at the first unjudged item
+for (let j = 0; j < items.length; j++) { if (grades[k(items[j])] === undefined) { i = j; break; } }
+render();
+</script>
+</body>
+</html>

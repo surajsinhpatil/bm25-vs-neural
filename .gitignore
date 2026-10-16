@@ -1,0 +1,16 @@
+__pycache__/
+*.egg-info/
+.pytest_cache/
+# large or re-derivable data (the corpus is rebuilt from the Kaggle snapshot; ids + checksum are committed)
+data/corpus/*.jsonl
+data/beir/
+indexes/*.npy
+indexes/*.ids.txt
+*.pkl
+outputs*.zip
+# LaTeX build files
+report/*.aux
+report/*.log
+report/*.out
+report/*.synctex.gz
+.pytest_cache/
