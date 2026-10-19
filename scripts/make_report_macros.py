@@ -17,7 +17,9 @@ def load(rel):
 
 
 def f(x, d=3):
-    return MISSING if x is None else f"{x:.{d}f}"
+    if x is None or (isinstance(x, float) and x != x):     # None or NaN
+        return MISSING
+    return f"{x:.{d}f}"
 
 
 def i(x):
@@ -77,9 +79,21 @@ M["anchorsFound"] = i(qc.get("anchors_found"))
 M["anchorsMissing"] = i(len(qc["missing"])) if "missing" in qc else MISSING
 
 ag = load("data/qrels/agreement.json") or {}
+if not ag.get("n"):
+    ag = {}
 M["kappaLin"] = f(ag.get("kappa_linear"))
 M["kappaQuad"] = f(ag.get("kappa_quadratic"))
 M["nDouble"] = i(ag.get("n"))
+
+ss = load("results/scifact_significance.json") or {}
+for s_, name in [("e5", "Efive"), ("specter2", "Spec"), ("bm25+e5", "HybE"), ("bm25+specter2", "HybS")]:
+    w = ss.get("win_tie_loss_vs_bm25", {}).get(s_)
+    M[f"sciWin{name}"] = i(w["win"]) if w else MISSING
+    M[f"sciLoss{name}"] = i(w["loss"]) if w else MISSING
+for lo_, hi_ in [("bm25", "e5"), ("bm25", "specter2"), ("e5", "bm25+e5"), ("specter2", "bm25+specter2"), ("e5", "specter2")]:
+    t = next((t for t in ss.get("tests", []) if t["a"] == lo_ and t["b"] == hi_), None)
+    key = "sciP" + "".join(x.capitalize() for x in (lo_ + "-" + hi_).replace("+", "-").split("-")).replace("5", "five").replace("2", "two")
+    M[key] = (r"$<$0.001" if t["p_holm"] < 0.001 else f(t["p_holm"], 3)) if t else MISSING
 
 ov = load("results/overlap.json") or {}
 for key, name in [("bm25|e5", "ovBE"), ("bm25|specter2", "ovBS"), ("e5|specter2", "ovES")]:
@@ -103,6 +117,18 @@ if rows:
         rows, ["System", "Index (s)", "Index (MB)", "Query (ms)", "p95 (ms)", "Hardware"], "lccccl",
         "Efficiency on the cs.CR corpus. Dense indexing = encoding the corpus on the GPU; dense query time "
         "includes encoding the query; hybrid = sum of its components (p95 not defined).", "tab:eff"))
+
+# values computed on Kaggle from files that are not in this checkout (corpus manifest, encoding
+# logs, pool summary) are taken from the macros file written there, if it is given
+import re
+import argparse
+ap = argparse.ArgumentParser()
+ap.add_argument("--fallback", default=None, help="macros.tex produced on Kaggle")
+args = ap.parse_args()
+if args.fallback and Path(args.fallback).exists():
+    for k, v in re.findall(r"\\newcommand\{\\(\w+)\}\{(.*)\}\n", Path(args.fallback).read_text()):
+        if M.get(k, MISSING) == MISSING and v not in (MISSING, "nan"):
+            M[k] = v
 
 out = ROOT / "report" / "tables" / "macros.tex"
 out.parent.mkdir(parents=True, exist_ok=True)

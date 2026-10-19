@@ -1,0 +1,12 @@
+{
+  "system": "bm25+e5",
+  "components": [
+    "bm25-id",
+    "e5"
+  ],
+  "fusion_mean_ms": 0.41655894000086846,
+  "mean_ms": 19.3431859199859,
+  "index_mb": 145.35999999999999,
+  "index_seconds": 194.91,
+  "peak_rss_mb": 373.6
+}

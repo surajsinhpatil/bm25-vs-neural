@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 
 from irproj.fusion import convex_combination
-from irproj.io import load_topics, read_qrels, read_run, write_run
+from irproj.io import load_topics, read_qrels, require_qrels, read_run, write_run
 from irproj.metrics import per_query
 
 ap = argparse.ArgumentParser()
@@ -29,7 +29,7 @@ ap.add_argument("--seed", type=int, default=11)
 a = ap.parse_args()
 
 lex, den = read_run(a.lexical), read_run(a.dense)
-qrels = read_qrels(a.qrels)
+qrels = require_qrels(a.qrels)
 topics = [t for t in load_topics(a.topics) if t["qid"] in qrels]
 qids = [t["qid"] for t in topics]
 alphas = np.round(np.arange(0, 1.01, 0.05), 2)

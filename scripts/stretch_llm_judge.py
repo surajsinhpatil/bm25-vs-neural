@@ -19,7 +19,7 @@ from pathlib import Path
 
 import numpy as np
 
-from irproj.io import load_corpus, load_topics, read_qrels, read_run, write_qrels
+from irproj.io import load_corpus, load_topics, read_qrels, require_qrels, read_run, write_qrels
 from irproj.metrics import per_query
 from irproj.stats import kendall_tau, weighted_kappa
 
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     _, docs = load_corpus(a.corpus)
     docs = {d["id"]: d for d in docs}
     topics = {t["qid"]: t for t in load_topics(a.topics)}
-    human = read_qrels(a.qrels)
+    human = require_qrels(a.qrels)
     cache = {}
     if Path(a.cache).exists():
         for line in open(a.cache):

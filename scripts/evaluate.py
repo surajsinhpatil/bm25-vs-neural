@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 
 from irproj import report as R
-from irproj.io import load_topics, read_qrels, read_run, sha256_file
+from irproj.io import load_topics, read_qrels, require_qrels, read_run, sha256_file
 from irproj.metrics import DEFAULT_METRICS, per_query
 from irproj.stats import bootstrap_ci, pairwise_tests
 
@@ -34,7 +34,7 @@ a = ap.parse_args()
 
 out, tables, figs = Path(a.out), Path(a.tables), Path(a.figures)
 out.mkdir(parents=True, exist_ok=True)
-qrels = read_qrels(a.qrels)
+qrels = require_qrels(a.qrels)
 topics = load_topics(a.topics)
 cat = {t["qid"]: t["category"] for t in topics}
 qids = [t["qid"] for t in topics if t["qid"] in qrels]

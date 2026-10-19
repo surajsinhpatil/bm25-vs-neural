@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Efficiency on the cs.CR corpus. Dense indexing = encoding the corpus on the GPU; dense query time includes encoding the query; hybrid = sum of its components (p95 not defined).}
+\label{tab:eff}
+\begin{tabular}{lccccl}
+\toprule
+System & Index (s) & Index (MB) & Query (ms) & p95 (ms) & Hardware \\
+\midrule
+BM25 & 20.3 & 29.3 & 1.6 & 1.7 & cpu \\
+E5 & 174.6 & 116.0 & 17.3 & 18.2 & Tesla T4 \\
+SPECTER2 & 182.6 & 116.0 & 30.0 & 36.6 & Tesla T4 \\
+BM25+E5 & 194.9 & 145.4 & 19.3 & -- & -- \\
+BM25+SPECTER2 & 202.8 & 145.4 & 32.0 & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}

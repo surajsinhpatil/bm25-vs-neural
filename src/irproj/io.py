@@ -124,5 +124,15 @@ def read_qrels(path: str | Path) -> Qrels:
     return dict(qrels)
 
 
+def require_qrels(path: str | Path) -> Qrels:
+    """Read qrels and stop with a clear message if there are none (e.g. no judgments exported yet)."""
+    qrels = read_qrels(path) if Path(path).exists() else {}
+    n = sum(len(v) for v in qrels.values())
+    if n == 0:
+        raise SystemExit(f"ERROR: {path} contains no judgments. Export the annotators' judgments to "
+                         "judging/exports/ and run scripts/merge_judgments.py first.")
+    return qrels
+
+
 def _qid_key(q: str):
     return (len(q), q)

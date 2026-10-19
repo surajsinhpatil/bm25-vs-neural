@@ -28,7 +28,11 @@ ap.add_argument("--corpus", default=None, help="optional, adds titles to the dis
 a = ap.parse_args()
 
 paths = sorted({p for pat in a.exports for p in glob.glob(pat)})
+if not paths:
+    raise SystemExit(f"ERROR: no judgment exports match {a.exports}. Nothing to merge.")
 judg = load_exports(paths)
+if sum(len(v) for v in judg.values()) == 0:
+    raise SystemExit("ERROR: the export files contain no grades yet.")
 agree = agreement(judg)
 out = Path(a.out)
 out.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,10 @@
+{
+  "system": "ce",
+  "base_run": "runs/bm25+e5.run",
+  "hardware": "cuda",
+  "note": "latency = re-ranking only (add the base run's latency)",
+  "mean_ms": 455.8366314400292,
+  "median_ms": 445.02802700003485,
+  "p95_ms": 487.809396999944,
+  "peak_rss_mb": 1929.9
+}

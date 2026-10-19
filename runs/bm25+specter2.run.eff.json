@@ -1,0 +1,12 @@
+{
+  "system": "bm25+specter2",
+  "components": [
+    "bm25-id",
+    "specter2"
+  ],
+  "fusion_mean_ms": 0.4171662200042192,
+  "mean_ms": 31.98477771998796,
+  "index_mb": 145.35999999999999,
+  "index_seconds": 202.84,
+  "peak_rss_mb": 373.6
+}

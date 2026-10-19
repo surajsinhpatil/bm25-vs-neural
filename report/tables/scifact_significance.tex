@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Paired randomisation tests on SciFact nDCG@10 (300 queries, 100,000 permutations, Holm over all 10 pairs).}
+\label{tab:scisig}
+\begin{tabular}{lccc}
+\toprule
+Comparison on SciFact & $\Delta$nDCG@10 & $p_{\text{Holm}}$ & Sig. \\
+\midrule
+E5 $-$ BM25 & +0.051 & 0.0235 & yes \\
+SPECTER2 $-$ BM25 & -0.031 & 0.3455 & no \\
+BM25+E5 $-$ BM25 & +0.065 & 0.0001 & yes \\
+BM25+SPECTER2 $-$ BM25 & +0.041 & 0.0126 & yes \\
+SPECTER2 $-$ E5 & -0.082 & 0.0001 & yes \\
+BM25+E5 $-$ E5 & +0.014 & 0.4953 & no \\
+BM25+SPECTER2 $-$ SPECTER2 & +0.072 & 0.0001 & yes \\
+\bottomrule
+\end{tabular}
+\end{table}

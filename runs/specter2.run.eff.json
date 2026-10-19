@@ -1,0 +1,14 @@
+{
+  "system": "specter2",
+  "n_docs": 39613,
+  "index_mb": 116.05,
+  "index_seconds": 182.57,
+  "hardware": "Tesla T4",
+  "truncated_pct": 0.007573271400802767,
+  "query_device": "cuda",
+  "mean_ms": 29.988992599992343,
+  "median_ms": 28.970805499966445,
+  "p95_ms": 36.64567945007775,
+  "search_only_mean_ms": 7.4447458000031475,
+  "peak_rss_mb": 2167.6
+}

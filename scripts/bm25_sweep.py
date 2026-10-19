@@ -17,7 +17,7 @@ import numpy as np
 
 from irproj import report as R
 from irproj.bm25 import BM25Index
-from irproj.io import doc_text, load_corpus, load_topics, read_qrels
+from irproj.io import doc_text, load_corpus, load_topics, read_qrels, require_qrels
 from irproj.metrics import per_query
 from irproj.tokenize import get_analyzer
 
@@ -39,7 +39,7 @@ K1S = np.round(np.arange(0.4, 2.01, 0.2), 2)
 BS = np.array(sorted(set(np.round(np.arange(0.0, 1.01, 0.1), 2).tolist()) | {0.75}))  # includes the default b
 
 ids, docs = load_corpus(a.corpus)
-qrels = read_qrels(a.qrels)
+qrels = require_qrels(a.qrels)
 topics = [t for t in load_topics(a.topics) if t["qid"] in qrels]
 qids = [t["qid"] for t in topics]
 queries = {t["qid"]: t["query"] for t in topics}

@@ -172,6 +172,6 @@ rows = [[R.pretty(s)] + [R.fmt(results[s][m]) for m in ("ndcg@10", "p@5", "mrr@1
         + [R.fmt(eff.get(s, {}).get("mean_ms"), 1)] for s in order]
 R.write(Path(a.tables) / f"{a.dataset}.tex", R.latex_table(
     rows, ["System", "nDCG@10", "P@5", "MRR@10", "MAP@10", "R@10", "ms/query"], "lcccccc",
-    f"BEIR {a.dataset.capitalize()} test set ({len(qids)} queries, {len(docs):,} abstracts); "
+    f"BEIR {'SciFact' if a.dataset == 'scifact' else a.dataset} test set ({len(qids)} queries, {len(docs):,} abstracts); "
     f"BM25 with $k_1$={a.k1}, $b$={a.b}.", f"tab:{a.dataset}", bold_max_cols=range(1, 6)))
 print(json.dumps({k: v for k, v in out.items() if k != "efficiency"}, indent=2))

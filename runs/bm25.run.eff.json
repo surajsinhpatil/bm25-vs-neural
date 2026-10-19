@@ -1,0 +1,16 @@
+{
+  "system": "bm25-id",
+  "n_docs": 39613,
+  "vocab": 56862,
+  "avgdl": 140.0296173095703,
+  "index_seconds": 20.27,
+  "index_mb": 29.31,
+  "k1": 1.2,
+  "b": 0.75,
+  "analyzer": "id",
+  "hardware": "cpu",
+  "mean_ms": 1.5786188999913975,
+  "median_ms": 1.5549750000332097,
+  "p95_ms": 1.740014049948968,
+  "peak_rss_mb": 522.8
+}

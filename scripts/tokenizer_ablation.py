@@ -15,7 +15,7 @@ import numpy as np
 
 from irproj import report as R
 from irproj.bm25 import BM25Index
-from irproj.io import doc_text, load_corpus, load_topics, read_qrels, write_run
+from irproj.io import doc_text, load_corpus, load_topics, read_qrels, require_qrels, write_run
 from irproj.metrics import per_query
 from irproj.stats import paired_randomization_test
 from irproj.tokenize import ANALYZERS
@@ -32,7 +32,7 @@ ap.add_argument("--label", default="")
 a = ap.parse_args()
 
 ids, docs = load_corpus(a.corpus)
-qrels = read_qrels(a.qrels)
+qrels = require_qrels(a.qrels)
 topics = [t for t in load_topics(a.topics) if t["qid"] in qrels]
 qids = [t["qid"] for t in topics]
 cat = {t["qid"]: t["category"] for t in topics}

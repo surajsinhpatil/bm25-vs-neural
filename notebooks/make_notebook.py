@@ -52,7 +52,13 @@ code("""!python scripts/build_corpus.py --snapshot {SNAPSHOT} --out data/corpus/
 md("## 2. Validation on BEIR SciFact (success criteria i and ii) + all five systems on SciFact\nThis gives the first quantitative comparison against a baseline on a collection that already has judgments.")
 code("""r = subprocess.run([sys.executable, "scripts/validate_scifact.py", "--data", "data/beir", "--out", "results",
                     "--dense", "--tables", "report/tables"], capture_output=True, text=True)
-print(r.stdout[-6000:]); print(r.stderr[-3000:])""")
+print(r.stdout[-6000:]); print(r.stderr[-3000:])
+# significance tests on SciFact (qrels ship with Pyserini)
+from pyserini.search import get_qrels
+from irproj.io import write_qrels
+q = get_qrels("beir-v1.0.0-scifact-test")
+write_qrels("data/beir/scifact.test.qrels.txt", {str(k): {str(d): int(g) for d, g in v.items()} for k, v in q.items()})
+!python scripts/scifact_significance.py --runs-dir runs/scifact --qrels data/beir/scifact.test.qrels.txt""")
 
 md("## 3. Check the queries against the corpus\nEvery query needs at least one confirmed relevant document. Anchors that are missing must be replaced by reading random abstracts (`scripts/sample_anchors.py`), **not** by searching with our systems.")
 code("!python scripts/check_queries.py --corpus data/corpus/cscr.jsonl --topics data/queries/topics.jsonl")
@@ -69,7 +75,7 @@ code("""T = "data/queries/topics.jsonl"; C = "data/corpus/cscr.jsonl"
 !python scripts/run_fusion.py --runs runs/bm25.run runs/specter2.run --tag bm25+specter2 --out runs/bm25+specter2.run""")
 code("""RUNS = "runs/bm25.run runs/e5.run runs/specter2.run runs/bm25+e5.run runs/bm25+specter2.run"
 !python scripts/run_overlap.py --runs runs/bm25.run runs/e5.run runs/specter2.run --topics {T} --out results --tables report/tables
-!python scripts/make_report_macros.py""")
+!python scripts/make_report_macros.py --fallback report/tables/macros.tex""")
 
 md("## 5. Pool and judging pages\nEach annotator gets one HTML file (open it in any browser, works offline). Phase 1 documents (top-5 of any run) come first.")
 code("""ANN = " ".join(ANNOTATORS)
@@ -95,6 +101,10 @@ filled-in `data/qrels/disagreements.csv` after the adjudication meeting), push, 
 the first cell (it pulls the repo) and the cells below. The runs from Part A are in
 `outputs.zip`; unzip them into the repo folder first if this is a new session.""")
 code("""!git pull -q
+# stop here (Run All halts on this exception) if nobody has exported judgments yet
+import glob
+if not glob.glob("judging/exports/*_main.json"):
+    raise RuntimeError("No judgments in judging/exports/ - Part B needs the annotators' exported JSON files.")
 !python scripts/merge_judgments.py --exports "judging/exports/*_main.json" --out data/qrels --corpus {C}
 # after adjudication:
 # !python scripts/merge_judgments.py --exports "judging/exports/*_main.json" --adjudication data/qrels/disagreements.csv --out data/qrels --freeze""")
