@@ -77,12 +77,17 @@ code("""RUNS = "runs/bm25.run runs/e5.run runs/specter2.run runs/bm25+e5.run run
 !python scripts/run_overlap.py --runs runs/bm25.run runs/e5.run runs/specter2.run --topics {T} --out results --tables report/tables
 !python scripts/make_report_macros.py --fallback report/tables/macros.tex""")
 
-md("## 5. Pool and judging pages\nEach annotator gets one HTML file (open it in any browser, works offline). Phase 1 documents (top-5 of any run) come first.")
+md("""## 5. Judging pages
+The round-1 pool is frozen in the repository (`judging/round1/pool.json`, 1,339 pairs). If you
+re-run the retrieval, freeze a new pool first with `scripts/make_pool.py ... --force`.
+This cell renders one page per annotator from the frozen pool and checks every item
+(query, description, relevance criteria, title, abstract, date for time queries, assignment).
+Download `/kaggle/working/judging_round1.zip`.""")
 code("""ANN = " ".join(ANNOTATORS)
-!python scripts/make_pool.py --runs {RUNS} --topics {T} --corpus {C} --annotators {ANN} --out judging/round1""")
+!python scripts/make_judging_pages.py --snapshot {SNAPSHOT} --zip /kaggle/working/judging_round1.zip""")
 
 md("## 6. Package everything for download")
-code("""!zip -qr /kaggle/working/outputs.zip runs results report/tables report/figures judging/round1 data/corpus/cscr.jsonl.manifest.json indexes/*.encode.json
+code("""!zip -qr /kaggle/working/outputs.zip runs results report/tables report/figures judging/round1 data/corpus/cscr.jsonl.manifest.json data/corpus/cscr.ids.txt indexes/*.encode.json
 !ls -la /kaggle/working/outputs.zip""")
 
 md("""## 6b. (Optional, for the intermediate report) preliminary numbers from partial judgments
@@ -117,7 +122,8 @@ code("""!python scripts/stretch_rerank.py --run runs/bm25+e5.run --corpus {C} --
 !python scripts/stretch_time_filter.py --run runs/bm25+e5.run --corpus {C} --topics {T} --out runs/bm25+e5+time.run
 !python scripts/stretch_cc_fusion.py --lexical runs/bm25.run --dense runs/e5.run --topics {T} --qrels {Q} --out runs/cc-bm25+e5.run
 # new documents retrieved by these runs must be judged in an extra round before their scores are final:
-!python scripts/make_pool.py --runs runs/ce.run runs/bm25+e5+time.run runs/cc-bm25+e5.run --topics {T} --corpus {C} --annotators {ANN} --out judging/round2 --already-judged {Q} --round extra""")
+!python scripts/make_pool.py --runs runs/ce.run runs/bm25+e5+time.run runs/cc-bm25+e5.run --topics {T} --annotators {ANN} --out judging/round2 --already-judged {Q} --round extra
+!python scripts/make_judging_pages.py --pool judging/round2/pool.json --practice-k 0 --zip /kaggle/working/judging_round2.zip""")
 code("""!zip -qr /kaggle/working/outputs_final.zip runs results report/tables report/figures judging/round2 data/qrels""")
 
 nb["cells"] = C

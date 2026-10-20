@@ -59,8 +59,9 @@ python -m pytest -q tests
 | 4. BM25 | `python scripts/run_bm25.py --corpus ... --topics ... --analyzer id --k1 1.2 --b 0.75 --out runs/bm25.run` |
 | 5. dense | `python scripts/encode_corpus.py --model e5 ...` then `python scripts/run_dense.py --model e5 ...` (same for `specter2`) |
 | 6. hybrids | `python scripts/run_fusion.py --runs runs/bm25.run runs/e5.run --tag bm25+e5 --out runs/bm25+e5.run` |
-| 7. pool | `python scripts/make_pool.py --runs runs/*.run --topics ... --corpus ... --annotators Suraj Tejas Swayam Saksham --out judging/round1` |
-| 8. judge | open `judging/round1/judge_<name>.html` in a browser, grade with keys 0-3, *Export judgments* into `judging/exports/` |
+| 7a. pool | `python scripts/make_pool.py --runs <5 runs> --topics ... --annotators Suraj Tejas Swayam Saksham --out judging/round1` → frozen `judging/round1/pool.json` (already committed for round 1: 1,339 pairs) |
+| 7b. pages | `python scripts/make_judging_pages.py --snapshot <arxiv snapshot> --zip judging_round1.zip` → `judge_<name>.html`, `practice_<name>.html`, `check_report.json` (needs the corpus; see below) |
+| 8. judge | follow `judging/HOW_TO_JUDGE.md`; exports go to `judging/exports/` |
 | 9. qrels | `python scripts/merge_judgments.py --exports "judging/exports/*_main.json" --out data/qrels` → resolve `disagreements.csv` → rerun with `--adjudication data/qrels/disagreements.csv --freeze` |
 | 10. evaluate | `python scripts/evaluate.py --qrels data/qrels/qrels.txt --topics ... --runs <5 runs>` |
 | 11. RQ5 | `scripts/bm25_sweep.py`, `scripts/tokenizer_ablation.py` |
@@ -69,6 +70,20 @@ python -m pytest -q tests
 
 Every run writes a TREC run file plus `<run>.eff.json` (index time, index size, per-query latency,
 peak memory). All random choices use fixed seeds.
+
+## Judging pages
+All text is written into the HTML when the page is generated; the script on the page only
+handles one-at-a-time display, grades, saving in the browser and export. A viewer that does
+not run scripts still shows every item (read-only, with a warning). `make_judging_pages.py`
+refuses to write a page with an empty query/description/criteria/title/abstract, a time query
+without a date, or a document missing from the corpus, and re-checks every written page
+against the frozen pool (`check_report.json`). `merge_judgments.py` refuses exports that were
+made from a different pool. Tests: `tests/test_judging_pages.py`, `tests/test_judging_browser.py`
+(headless Chromium: grading, saving across reloads, export, import, no-script view).
+
+The corpus is not committed (size). `make_judging_pages.py` rebuilds it from the Kaggle arXiv
+snapshot if `data/corpus/cscr.jsonl` is missing and compares its SHA-256 with
+`data/corpus/EXPECTED.json` (the corpus the runs were made on).
 
 ## Judging protocol (summary)
 * Pool: top-10 of all five runs; documents in any run's top-5 are judged first (phase 1).

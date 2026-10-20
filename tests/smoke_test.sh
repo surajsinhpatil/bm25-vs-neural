@@ -19,11 +19,12 @@ python3 scripts/run_fusion.py --runs "$W/runs/bm25.run" "$W/runs/e5.run" --tag b
 python3 scripts/run_fusion.py --runs "$W/runs/bm25.run" "$W/runs/specter2.run" --tag bm25+specter2 --out "$W/runs/bm25+specter2.run"
 RUNS="$W/runs/bm25.run $W/runs/e5.run $W/runs/specter2.run $W/runs/bm25+e5.run $W/runs/bm25+specter2.run"
 python3 scripts/run_overlap.py --runs $RUNS --topics $T --out "$W/results" --tables "$W/tables"
-python3 scripts/make_pool.py --runs $RUNS --topics $T --corpus "$W/corpus.jsonl" \
-  --annotators Suraj Tejas Swayam Saksham --out "$W/judging" | head -12
+python3 scripts/make_pool.py --runs $RUNS --topics $T --annotators Suraj Tejas Swayam Saksham --out "$W/judging"
+python3 scripts/make_judging_pages.py --pool "$W/judging/pool.json" --topics $T --corpus "$W/corpus.jsonl" \
+  --expected /nonexistent | tail -10
 python3 tests/simulate_judges.py "$W/judging" "$W/exports"
-python3 scripts/merge_judgments.py --exports "$W/exports/*.json" --out "$W/qrels" --corpus "$W/corpus.jsonl" || true
-python3 scripts/merge_judgments.py --exports "$W/exports/*.json" --out "$W/qrels" --fallback lower
+python3 scripts/merge_judgments.py --exports "$W/exports/*.json" --out "$W/qrels" --corpus "$W/corpus.jsonl" --pool "$W/judging/pool.json" || true
+python3 scripts/merge_judgments.py --exports "$W/exports/*.json" --out "$W/qrels" --fallback lower --pool "$W/judging/pool.json"
 cp "$W/qrels/qrels.preliminary-lower.txt" "$W/qrels/qrels.txt"
 python3 scripts/evaluate.py --qrels "$W/qrels/qrels.txt" --topics $T --runs $RUNS --out "$W/results" \
   --tables "$W/tables" --figures "$W/figures" --n-perm 2000
@@ -37,6 +38,8 @@ python3 scripts/stretch_cc_fusion.py --lexical "$W/runs/bm25.run" --dense "$W/ru
   --qrels "$W/qrels/qrels.txt" --out "$W/runs/cc-bm25+e5.run" | head -8
 python3 scripts/stretch_rerank.py --run "$W/runs/bm25+e5.run" --corpus "$W/corpus.jsonl" --topics $T \
   --out "$W/runs/ce.run" --model "$TINY/base" --depth 20
-python3 scripts/make_pool.py --runs "$W/runs/ce.run" "$W/runs/bm25+e5+time.run" --topics $T --corpus "$W/corpus.jsonl" \
-  --annotators Suraj Tejas Swayam Saksham --out "$W/judging_round2" --already-judged "$W/qrels/qrels.txt" --round extra | head -6
+python3 scripts/make_pool.py --runs "$W/runs/ce.run" "$W/runs/bm25+e5+time.run" --topics $T \
+  --annotators Suraj Tejas Swayam Saksham --out "$W/judging_round2" --already-judged "$W/qrels/qrels.txt" --round extra
+python3 scripts/make_judging_pages.py --pool "$W/judging_round2/pool.json" --topics $T --corpus "$W/corpus.jsonl" \
+  --expected /nonexistent --practice-k 0 | tail -6
 echo "SMOKE TEST OK"

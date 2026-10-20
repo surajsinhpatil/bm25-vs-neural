@@ -5,138 +5,208 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Relevance Judging</title>
 <style>
-  :root { --bg:#f7f7f5; --card:#fff; --ink:#1d1d1b; --muted:#6b6b66; --line:#e2e1dc;
-          --accent:#2f5d8a; --g0:#9b3b3b; --g1:#a8762a; --g2:#3d7a4e; --g3:#1f5c3a; }
+  :root { --bg:#f7f7f5; --card:#fff; --ink:#1d1d1b; --muted:#5f5e59; --line:#dddcd6;
+          --accent:#2f5d8a; --warn-bg:#fff4e0; --warn:#8a5a00;
+          --g0:#9b3b3b; --g1:#9a6a1f; --g2:#3d7a4e; --g3:#1f5c3a; }
   * { box-sizing:border-box; }
-  body { margin:0; font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--ink); }
+  [hidden] { display:none !important; }
+  body { margin:0; font:15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background:var(--bg); color:var(--ink); }
   header { position:sticky; top:0; z-index:2; background:var(--card); border-bottom:1px solid var(--line);
-           padding:10px 16px; display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
-  header h1 { font-size:16px; margin:0 12px 0 0; }
-  .bar { flex:1; min-width:160px; height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
+           padding:10px 16px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  header h1 { font-size:16px; margin:0 10px 0 0; }
+  .bar { flex:1; min-width:140px; height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
   .bar > div { height:100%; background:var(--accent); width:0; }
-  button { font:inherit; border:1px solid var(--line); background:var(--card); padding:6px 12px; border-radius:6px; cursor:pointer; }
+  button { font:inherit; color:inherit; border:1px solid var(--line); background:var(--card);
+           padding:6px 12px; border-radius:6px; cursor:pointer; }
   button:hover { border-color:var(--accent); }
-  main { max-width:1100px; margin:0 auto; padding:16px; display:grid; grid-template-columns: 1fr 320px; gap:16px; }
-  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
-  .q { font-size:18px; font-weight:600; margin:0 0 6px; }
-  .label { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-top:10px; }
-  .doc-title { font-size:17px; font-weight:600; margin:0 0 8px; }
-  .abstract { white-space:pre-wrap; }
-  .meta { color:var(--muted); font-size:13px; margin-bottom:8px; }
+  .notice { margin:12px 16px; padding:10px 14px; border-radius:8px; background:var(--warn-bg);
+            color:var(--warn); border:1px solid #f0d9a8; }
+  main { max-width:1150px; margin:0 auto; padding:12px 16px 40px; }
+  .item { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px;
+          margin:0 0 16px; display:grid; grid-template-columns: 340px 1fr; gap:18px; }
+  @media (max-width: 860px) { .item { grid-template-columns: 1fr; } }
+  .item-meta { grid-column:1 / -1; color:var(--muted); font-size:13px; }
+  .phase { display:inline-block; font-size:12px; padding:1px 8px; border-radius:10px;
+           background:#e6eef7; color:var(--accent); margin-right:6px; }
+  .qpanel { background:#fafaf8; border:1px solid var(--line); border-radius:8px; padding:12px; align-self:start; }
+  .qpanel h3 { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);
+               margin:10px 0 2px; }
+  .qpanel h3:first-child { margin-top:0; }
+  .qpanel p { margin:0; }
+  .qpanel .query { font-size:17px; font-weight:600; }
+  .title { font-size:18px; margin:0 0 6px; }
+  .doc-date { margin:0 0 8px; color:var(--muted); font-size:14px; }
+  .abstract { margin:0; white-space:pre-wrap; }
   .grades { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:16px; }
-  .grades button { padding:10px 6px; text-align:left; }
+  @media (max-width: 600px) { .grades { grid-template-columns:1fr 1fr; } }
+  .grades button { text-align:left; padding:9px 8px; }
   .grades button b { display:block; font-size:16px; }
-  .grades button.sel[data-g="0"] { background:var(--g0); color:#fff; }
-  .grades button.sel[data-g="1"] { background:var(--g1); color:#fff; }
-  .grades button.sel[data-g="2"] { background:var(--g2); color:#fff; }
-  .grades button.sel[data-g="3"] { background:var(--g3); color:#fff; }
-  .nav { display:flex; gap:8px; margin-top:12px; align-items:center; flex-wrap:wrap; }
+  .grades button.sel[data-g="0"] { background:var(--g0); color:#fff; border-color:var(--g0); }
+  .grades button.sel[data-g="1"] { background:var(--g1); color:#fff; border-color:var(--g1); }
+  .grades button.sel[data-g="2"] { background:var(--g2); color:#fff; border-color:var(--g2); }
+  .grades button.sel[data-g="3"] { background:var(--g3); color:#fff; border-color:var(--g3); }
+  .saved-grade { color:var(--muted); font-size:13px; margin:6px 0 0; min-height:1em; }
+  .nav { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0 0 12px; }
   .muted { color:var(--muted); font-size:13px; }
   kbd { border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 4px; font-size:12px; }
-  .phase { display:inline-block; font-size:12px; padding:2px 8px; border-radius:10px; background:#e8eef5; color:var(--accent); }
+  /* Without scripts: every item is listed, grading controls are hidden. */
+  .js-only { display:none; }
+  /* With scripts: one item at a time. */
+  html.js .js-only { display:revert; }
+  html.js .grades.js-only { display:grid; }
+  html.js .nav.js-only { display:flex; }
+  html.js .nojs-only { display:none; }
+  html.js .item { display:none; }
+  html.js .item.current { display:grid; }
 </style>
 </head>
 <body>
+<div id="page-meta" hidden data-annotator="{{ANNOTATOR}}" data-round="{{ROUND}}" data-pool-id="{{POOL_ID}}" data-n-items="{{N_ITEMS}}"></div>
 <header>
-  <h1>Relevance judging &mdash; <span id="who"></span></h1>
-  <span id="count" class="muted"></span>
-  <div class="bar"><div id="prog"></div></div>
-  <button id="nextUnjudged" title="Jump to the next document without a grade">Next unjudged</button>
-  <button id="export">Export judgments</button>
-  <label class="muted"><input type="file" id="import" accept=".json" style="display:none">
-    <button onclick="document.getElementById('import').click()">Import</button></label>
+  <h1>Relevance judging &mdash; {{ANNOTATOR}} <span class="muted">({{ROUND}}, {{N_ITEMS}} items)</span></h1>
+  <span id="count" class="muted js-only"></span>
+  <div class="bar js-only"><div id="prog"></div></div>
+  <button type="button" id="nextUnjudged" class="js-only">Next unjudged</button>
+  <button type="button" id="export" class="js-only">Export judgments</button>
+  <button type="button" id="importBtn" class="js-only">Import</button>
+  <input type="file" id="import" accept=".json,application/json" hidden>
 </header>
+<div class="notice nojs-only">
+  Grading is off: this viewer is not running the page's script, so every item is listed below
+  for reading only. To grade, save this file and open it directly in Chrome, Edge or Firefox
+  (double-click the .html file, or drag it into a browser window).
+</div>
+<div class="notice js-only" id="storageWarning" hidden>
+  This browser does not let the page save your grades. They are kept only while this tab is
+  open, so click <b>Export judgments</b> before you close it.
+</div>
 <main>
-  <section class="card">
-    <div class="meta"><span class="phase" id="phase"></span> &nbsp; Item <span id="pos"></span></div>
-    <h2 class="doc-title" id="title"></h2>
-    <div class="meta" id="date"></div>
-    <div class="abstract" id="abstract"></div>
-    <div class="grades">
-      <button data-g="0"><b>0</b>Not relevant</button>
-      <button data-g="1"><b>1</b>On topic, but does not answer the query or breaks a condition</button>
-      <button data-g="2"><b>2</b>Relevant</button>
-      <button data-g="3"><b>3</b>Highly relevant</button>
-    </div>
-    <div class="nav">
-      <button id="prev">&larr; Previous</button>
-      <button id="next">Next &rarr;</button>
-      <span class="muted">Keys: <kbd>0</kbd>&ndash;<kbd>3</kbd> grade and advance, <kbd>&larr;</kbd>/<kbd>&rarr;</kbd> move.
-        Work is saved in this browser automatically; export regularly as a backup.</span>
-    </div>
-  </section>
-  <aside class="card">
-    <div class="label">Query <span id="qid"></span></div>
-    <p class="q" id="query"></p>
-    <div class="label">Description</div>
-    <p id="desc"></p>
-    <div class="label">What counts as relevant</div>
-    <p id="narr"></p>
-  </aside>
+  <div class="nav js-only">
+    <button type="button" id="prev">&larr; Previous</button>
+    <button type="button" id="next">Next &rarr;</button>
+    <span class="muted">Keys: <kbd>0</kbd>&ndash;<kbd>3</kbd> grade and go to the next item,
+      <kbd>&larr;</kbd>/<kbd>&rarr;</kbd> move. Grades are saved in this browser automatically;
+      export them regularly as a backup.</span>
+  </div>
+{{ITEMS}}
 </main>
 <script>
-const DATA = /*__DATA__*/null;
-const KEY = "irjudge:" + DATA.annotator + ":" + DATA.round;
-const items = DATA.items;
-let grades = {};
-try { grades = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { grades = {}; }
-let i = 0;
-const k = it => it.qid + "\t" + it.docid;
-const $ = id => document.getElementById(id);
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var items = Array.prototype.slice.call(document.querySelectorAll("article.item"));
+  var meta = document.getElementById("page-meta");
+  var annotator = meta.getAttribute("data-annotator");
+  var roundName = meta.getAttribute("data-round");
+  var poolId = meta.getAttribute("data-pool-id");
+  var KEY = "irjudge:" + annotator + ":" + roundName + ":" + poolId;
+  var grades = {};
+  var store = null;
+  try {
+    store = window.localStorage;
+    store.setItem("irjudge:test", "1");
+    store.removeItem("irjudge:test");
+  } catch (e) { store = null; }
+  if (store) {
+    try { grades = JSON.parse(store.getItem(KEY) || "{}") || {}; } catch (e) { grades = {}; }
+  }
+  root.className += " js";
+  if (!store) { document.getElementById("storageWarning").hidden = false; }
+  if (!items.length) { return; }
 
-function save() { try { localStorage.setItem(KEY, JSON.stringify(grades)); } catch (e) {} }
-function done() { return items.filter(it => grades[k(it)] !== undefined).length; }
-function render() {
-  const it = items[i];
-  $("who").textContent = DATA.annotator + " (" + DATA.round + ")";
-  $("pos").textContent = (i + 1) + " / " + items.length;
-  $("phase").textContent = it.phase === 1 ? "Phase 1 (judge first)" : "Phase 2";
-  $("title").textContent = it.title;
-  $("abstract").textContent = it.abstract;
-  $("date").textContent = it.show_date ? "First version: " + it.date : "";
-  $("qid").textContent = it.qid;
-  $("query").textContent = it.query;
-  $("desc").textContent = it.description;
-  $("narr").textContent = it.narrative;
-  const g = grades[k(it)];
-  document.querySelectorAll(".grades button").forEach(b => b.classList.toggle("sel", String(g) === b.dataset.g));
-  const n = done();
-  $("count").textContent = n + " of " + items.length + " judged";
-  $("prog").style.width = (100 * n / items.length) + "%";
-}
-function setGrade(g) { grades[k(items[i])] = g; save(); if (i < items.length - 1) i++; render(); }
-document.querySelectorAll(".grades button").forEach(b => b.onclick = () => setGrade(+b.dataset.g));
-$("prev").onclick = () => { if (i > 0) i--; render(); };
-$("next").onclick = () => { if (i < items.length - 1) i++; render(); };
-$("nextUnjudged").onclick = () => {
-  for (let s = 1; s <= items.length; s++) { const j = (i + s) % items.length;
-    if (grades[k(items[j])] === undefined) { i = j; break; } }
+  function key(el) { return el.getAttribute("data-qid") + "\t" + el.getAttribute("data-docid"); }
+  function save() { if (store) { try { store.setItem(KEY, JSON.stringify(grades)); } catch (e) {} } }
+  function judgedCount() {
+    var n = 0;
+    for (var j = 0; j < items.length; j++) { if (grades.hasOwnProperty(key(items[j]))) { n++; } }
+    return n;
+  }
+  var i = 0;
+  for (var j = 0; j < items.length; j++) { if (!grades.hasOwnProperty(key(items[j]))) { i = j; break; } }
+
+  function render() {
+    for (var j = 0; j < items.length; j++) { items[j].classList.toggle("current", j === i); }
+    var el = items[i];
+    var g = grades.hasOwnProperty(key(el)) ? String(grades[key(el)]) : null;
+    var btns = el.querySelectorAll(".grades button");
+    for (var b = 0; b < btns.length; b++) { btns[b].classList.toggle("sel", btns[b].getAttribute("data-g") === g); }
+    el.querySelector(".saved-grade").textContent = g === null ? "Not graded yet." : "Saved grade: " + g;
+    var n = judgedCount();
+    document.getElementById("count").textContent = n + " of " + items.length + " judged";
+    document.getElementById("prog").style.width = (100 * n / items.length) + "%";
+  }
+  function setGrade(g) {
+    grades[key(items[i])] = g;
+    save();
+    if (i < items.length - 1) { i++; }
+    render();
+    window.scrollTo(0, 0);
+  }
+  items.forEach(function (el) {
+    var btns = el.querySelectorAll(".grades button");
+    for (var b = 0; b < btns.length; b++) {
+      btns[b].addEventListener("click", function (ev) {
+        setGrade(parseInt(ev.currentTarget.getAttribute("data-g"), 10));
+      });
+    }
+  });
+  document.getElementById("prev").onclick = function () { if (i > 0) { i--; } render(); };
+  document.getElementById("next").onclick = function () { if (i < items.length - 1) { i++; } render(); };
+  document.getElementById("nextUnjudged").onclick = function () {
+    for (var s = 1; s <= items.length; s++) {
+      var j = (i + s) % items.length;
+      if (!grades.hasOwnProperty(key(items[j]))) { i = j; break; }
+    }
+    render();
+  };
+  document.addEventListener("keydown", function (e) {
+    if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) { return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) { return; }
+    if (e.key === "0" || e.key === "1" || e.key === "2" || e.key === "3") { setGrade(parseInt(e.key, 10)); }
+    else if (e.key === "ArrowRight") { if (i < items.length - 1) { i++; } render(); }
+    else if (e.key === "ArrowLeft") { if (i > 0) { i--; } render(); }
+  });
+  document.getElementById("export").onclick = function () {
+    var out = { annotator: annotator, round: roundName, pool_id: poolId,
+                exported: new Date().toISOString(), judgments: [] };
+    items.forEach(function (el) {
+      var k = key(el);
+      out.judgments.push({ qid: el.getAttribute("data-qid"), docid: el.getAttribute("data-docid"),
+                           grade: grades.hasOwnProperty(k) ? grades[k] : null });
+    });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: "application/json" }));
+    a.download = "judgments_" + annotator + "_" + roundName + ".json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  };
+  document.getElementById("importBtn").onclick = function () { document.getElementById("import").click(); };
+  document.getElementById("import").onchange = function (ev) {
+    var f = ev.target.files[0];
+    if (!f) { return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var d;
+      try { d = JSON.parse(reader.result); } catch (e) { alert("Not a judgments file."); return; }
+      if (d.annotator !== annotator || d.round !== roundName) {
+        alert("This file belongs to " + d.annotator + " (" + d.round + "), not to " + annotator + " (" + roundName + ").");
+        return;
+      }
+      var valid = {};
+      items.forEach(function (el) { valid[key(el)] = true; });
+      (d.judgments || []).forEach(function (j) {
+        var k = j.qid + "\t" + j.docid;
+        if (valid[k] && j.grade !== null && j.grade !== undefined) { grades[k] = j.grade; }
+      });
+      save();
+      render();
+    };
+    reader.readAsText(f);
+  };
   render();
-};
-document.addEventListener("keydown", e => {
-  if (e.target.tagName === "INPUT") return;
-  if ("0123".includes(e.key) && e.key.length === 1) setGrade(+e.key);
-  else if (e.key === "ArrowRight") { if (i < items.length - 1) i++; render(); }
-  else if (e.key === "ArrowLeft") { if (i > 0) i--; render(); }
-});
-$("export").onclick = () => {
-  const out = { annotator: DATA.annotator, round: DATA.round, exported: new Date().toISOString(),
-    judgments: items.map(it => ({ qid: it.qid, docid: it.docid, grade: grades[k(it)] ?? null })) };
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: "application/json" }));
-  a.download = "judgments_" + DATA.annotator + "_" + DATA.round + ".json";
-  a.click();
-};
-$("import").onchange = ev => {
-  const f = ev.target.files[0]; if (!f) return;
-  f.text().then(t => { const d = JSON.parse(t);
-    d.judgments.forEach(j => { if (j.grade !== null && j.grade !== undefined) grades[j.qid + "\t" + j.docid] = j.grade; });
-    save(); render(); });
-};
-// start at the first unjudged item
-for (let j = 0; j < items.length; j++) { if (grades[k(items[j])] === undefined) { i = j; break; } }
-render();
+})();
 </script>
 </body>
 </html>

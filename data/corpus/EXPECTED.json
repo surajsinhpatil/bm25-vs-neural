@@ -1,0 +1,7 @@
+{
+  "note": "Corpus the five runs of 19 Oct 2026 were made on (Kaggle arXiv snapshot attached that day). Only the first 12 hex digits of the SHA-256 were recorded.",
+  "n_docs": 39613,
+  "n_primary_cr": 26487,
+  "sha256_prefix": "fda391ecc5b6",
+  "build": {"category": "cs.CR", "year_from": 2016, "year_to": 2025, "max_docs": 50000, "seed": 13}
+}

@@ -1,4 +1,4 @@
-"""Depth-k pooling, annotator assignment, blind judging pages and merging of judgments."""
+"""Depth-k pooling, annotator assignment and merging of judgments (pages: see judging.py)."""
 from __future__ import annotations
 
 import csv
@@ -11,9 +11,6 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 
 from .io import Qrels, Run, rank_docs
 from .stats import weighted_kappa
-
-TEMPLATE = Path(__file__).resolve().parents[2] / "judging" / "judge_template.html"
-
 
 def build_pool(runs: Dict[str, Run], qids: Sequence[str], depth: int = 10, priority_depth: int = 5,
                already_judged: Qrels | None = None) -> Dict[str, List[Tuple[str, bool]]]:
@@ -51,38 +48,6 @@ def assign_queries(qids: Sequence[str], annotators: Sequence[str], per_query: in
             load[a] += 1
         out[qid] = list(pair)
     return out
-
-
-def judging_items(pool: Dict[str, List[Tuple[str, bool]]], topics: Dict[str, dict],
-                  docs: Dict[str, dict], qids: Iterable[str], seed: int) -> List[dict]:
-    """Items for one annotator, blind: no system names, no ranks, random order inside
-    each phase. Phase 1 = priority documents of every query, phase 2 = the rest."""
-    rng = random.Random(seed)
-    items = []
-    for phase in (1, 2):
-        for qid in qids:
-            t = topics[qid]
-            ds = [d for d, pr in pool[qid] if pr == (phase == 1)]
-            rng.shuffle(ds)
-            for d in ds:
-                doc = docs[d]
-                items.append({
-                    "qid": qid, "docid": d, "phase": phase,
-                    "query": t["query"], "description": t["description"], "narrative": t["narrative"],
-                    "show_date": t.get("category") == "time",
-                    "title": doc["title"], "abstract": doc["abstract"], "date": doc.get("date", ""),
-                })
-    return items
-
-
-def write_judging_page(out_html: str | Path, annotator: str, items: List[dict],
-                       round_name: str = "main", template: str | Path = TEMPLATE) -> None:
-    html = Path(template).read_text(encoding="utf-8")
-    payload = json.dumps({"annotator": annotator, "round": round_name, "items": items},
-                         ensure_ascii=False).replace("</", "<\\/")
-    html = html.replace("/*__DATA__*/null", payload)
-    Path(out_html).parent.mkdir(parents=True, exist_ok=True)
-    Path(out_html).write_text(html, encoding="utf-8")
 
 
 # --------------------------------------------------------------------------- merging
