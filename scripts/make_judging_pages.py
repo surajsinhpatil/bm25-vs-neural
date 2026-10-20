@@ -121,7 +121,7 @@ if problems:
 if a.zip:
     Path(a.zip).parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(a.zip, "w", zipfile.ZIP_DEFLATED) as z:
-        for p in written + [out / "check_report.json", Path(a.pool)]:
+        for p in written + [out / "check_report.json"]:
             z.write(p, arcname=f"{out.name}/{p.name}")
         howto = ROOT / "judging" / "HOW_TO_JUDGE.md"
         if howto.exists():
