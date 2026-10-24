@@ -37,7 +37,8 @@ ap.add_argument("--corpus", required=True)
 ap.add_argument("--topics", default=str(ROOT / "data/queries/topics.jsonl"))
 ap.add_argument("--qrels", default=str(ROOT / "data/qrels/qrels.txt"))
 ap.add_argument("--expected-qrels-sha", default=None, help="default: data/qrels/qrels.sha256")
-ap.add_argument("--expected-corpus", default=str(ROOT / "data/corpus/EXPECTED.json"))
+ap.add_argument("--expected-corpus", default=str(ROOT / "data/corpus/EXPECTED.json"),
+                help="EXPECTED.json to check the corpus against, or 'none' to skip (synthetic tests only)")
 ap.add_argument("--reference-run", default=str(ROOT / "runs/bm25.run"))
 ap.add_argument("--allow-corpus-mismatch", action="store_true")
 ap.add_argument("--variants", nargs="+", default=["id", "plain", "id-nostem", "plain-nostem", "id-nostop"])
@@ -95,6 +96,8 @@ for v in a.variants:
               **{f"ndcg@10_{c}": float(np.mean([pq["ndcg@10"][q] for q in qids if cat[q] == c])) for c in CATS}}
     print(v, json.dumps({k: res[v][k] for k in ("vocab", "ndcg@10", "ndcgc@10", "hole@10")}))
 status = "EXPLORATORY" if comparable else "NOT COMPARABLE (corpus differs from the frozen runs)"
+if corpus_check["skipped"]:
+    status += " (corpus check skipped)"
 
 for metric, suffix in (("ndcg@10", ""), ("ndcgc@10", "_condensed")):
     raw = {}

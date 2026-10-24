@@ -34,7 +34,8 @@ ap.add_argument("--corpus", required=True)
 ap.add_argument("--topics", default=str(ROOT / "data/queries/topics.jsonl"))
 ap.add_argument("--qrels", default=str(ROOT / "data/qrels/qrels.txt"))
 ap.add_argument("--expected-qrels-sha", default=None, help="default: data/qrels/qrels.sha256")
-ap.add_argument("--expected-corpus", default=str(ROOT / "data/corpus/EXPECTED.json"))
+ap.add_argument("--expected-corpus", default=str(ROOT / "data/corpus/EXPECTED.json"),
+                help="EXPECTED.json to check the corpus against, or 'none' to skip (synthetic tests only)")
 ap.add_argument("--reference-run", default=str(ROOT / "runs/bm25.run"),
                 help="committed default BM25 run; the rebuilt default must reproduce it")
 ap.add_argument("--allow-corpus-mismatch", action="store_true",
@@ -75,6 +76,8 @@ if not comparable and not a.allow_corpus_mismatch:
                      "Attach the arXiv dataset version used on 19 Oct 2026, or re-run with "
                      "--allow-corpus-mismatch to get results labelled NOT COMPARABLE.")
 status = "EXPLORATORY" if comparable else "NOT COMPARABLE (corpus differs from the frozen runs)"
+if corpus_check["skipped"]:
+    status += " (corpus check skipped)"
 
 # ------------------------------------------------------------------ sweep
 t0 = time.perf_counter()

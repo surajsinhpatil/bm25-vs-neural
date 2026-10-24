@@ -30,7 +30,7 @@ python3 scripts/evaluate.py --qrels "$W/qrels/qrels.txt" --topics $T --runs $RUN
   --tables "$W/tables" --figures "$W/figures" --n-perm 2000
 QSHA=$(python3 -c "import sys; from irproj.io import sha256_file; print(sha256_file(sys.argv[1]))" "$W/qrels/qrels.txt")
 RQ5ARGS=(--corpus "$W/corpus.jsonl" --topics $T --qrels "$W/qrels/qrels.txt" --expected-qrels-sha "$QSHA" \
-  --expected-corpus /nonexistent --reference-run "$W/runs/bm25.run" --tables "$W/tables")
+  --expected-corpus none --reference-run "$W/runs/bm25.run" --tables "$W/tables")
 python3 scripts/bm25_sweep.py "${RQ5ARGS[@]}" --out "$W/rq5/sweep" | tail -12
 python3 scripts/tokenizer_ablation.py "${RQ5ARGS[@]}" --out "$W/rq5/tokenisation" | tail -3
 python3 scripts/stretch_time_filter.py --run "$W/runs/bm25+e5.run" --corpus "$W/corpus.jsonl" --topics $T \

@@ -69,10 +69,17 @@ def verify_qrels(path: str | Path, expected_sha: str) -> str:
 
 
 def verify_corpus(path: str | Path, n_docs: int, expected_json: str | Path | None = None) -> Dict:
-    """Compare the corpus with EXPECTED.json (document count and SHA-256 prefix)."""
+    """Compare the corpus with EXPECTED.json (document count and SHA-256 prefix).
+    `expected_json` = None or "none" skips the check explicitly (synthetic tests only); a path that
+    does not exist is an error, so a mistyped path cannot silently disable the check."""
     sha = sha256_file(path)
     out = {"path": str(path), "sha256": sha, "n_docs": n_docs}
-    if expected_json and Path(expected_json).exists():
+    skip = expected_json is None or str(expected_json).lower() == "none"
+    if not skip and not Path(expected_json).exists():
+        raise SystemExit(f"ERROR: expected-corpus file {expected_json} does not exist "
+                         "(pass 'none' to skip the corpus check on synthetic data)")
+    out["skipped"] = skip
+    if not skip:
         exp = json.loads(Path(expected_json).read_text())
         out.update(expected_n_docs=exp.get("n_docs"), expected_sha256_prefix=exp.get("sha256_prefix"),
                    n_docs_match=n_docs == exp.get("n_docs"),

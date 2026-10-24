@@ -54,6 +54,10 @@ def test_verify_corpus(tmp_path):
     assert rq5.verify_corpus(c, 2, e)["match"] is False
     e.write_text(json.dumps({"n_docs": 1, "sha256_prefix": "000000000000"}))
     assert rq5.verify_corpus(c, 1, e)["match"] is False
+    # skipping must be explicit; a missing file is an error, never a silent skip
+    assert rq5.verify_corpus(c, 1, "none")["match"] is None and rq5.verify_corpus(c, 1, "none")["skipped"]
+    with pytest.raises(SystemExit):
+        rq5.verify_corpus(c, 1, tmp_path / "missing.json")
 
 
 def test_reproduction_check(tmp_path):
