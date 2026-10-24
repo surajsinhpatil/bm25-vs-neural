@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Sensitivity to adjudication. Exact range of each mean difference over every adjudication that picks one of the two submitted grades (40,269 per-query combinations enumerated); share of 500 random adjudications in which the pair is significant (Holm, 10 pairs); and the test on the single most adversarial adjudication.}
+\label{tab:fsens}
+\begin{tabular}{lcccc}
+\toprule
+Comparison & Exact range of $\Delta$nDCG@10 & Sign can flip & Sig.\ in random adj. & Worst case \\
+\midrule
+BM25 $-$ E5 & $-$0.099 to +0.068 & yes & 0\% & -- \\
+BM25 $-$ SPECTER2 & +0.001 to +0.250 & no & 99\% & n.s. \\
+BM25 $-$ BM25+E5 & $-$0.092 to +0.015 & yes & 7\% & -- \\
+BM25 $-$ BM25+SPECTER2 & $-$0.064 to +0.088 & yes & 0\% & -- \\
+E5 $-$ SPECTER2 & +0.020 to +0.262 & no & 100\% & n.s. \\
+E5 $-$ BM25+E5 & $-$0.080 to +0.035 & yes & 0\% & -- \\
+E5 $-$ BM25+SPECTER2 & $-$0.067 to +0.118 & yes & 0\% & -- \\
+SPECTER2 $-$ BM25+E5 & $-$0.283 to $-$0.046 & no & 100\% & n.s. \\
+SPECTER2 $-$ BM25+SPECTER2 & $-$0.202 to $-$0.032 & no & 100\% & n.s. \\
+BM25+E5 $-$ BM25+SPECTER2 & $-$0.021 to +0.122 & yes & 16\% & -- \\
+\bottomrule
+\end{tabular}
+\end{table}

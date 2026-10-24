@@ -30,6 +30,7 @@ ap.add_argument("--main-metric", default="ndcg@10")
 ap.add_argument("--rel-level", type=int, default=2)
 ap.add_argument("--n-perm", type=int, default=100_000)
 ap.add_argument("--label", default="", help="suffix for output names, e.g. '-prelim'")
+ap.add_argument("--status", default="", help="text added to table captions, e.g. 'PRELIMINARY (conflicts at lower grade)'")
 a = ap.parse_args()
 
 out, tables, figs = Path(a.out), Path(a.tables), Path(a.figures)
@@ -43,7 +44,19 @@ if missing:
     print(f"warning: {len(missing)} topics have no judgments and are skipped: {missing}")
 systems = [Path(p).stem for p in a.runs]
 runs = {Path(p).stem: read_run(p) for p in a.runs}
-pq = {s: per_query(runs[s], qrels, DEFAULT_METRICS, a.rel_level, qids) for s in systems}
+# compatibility checks: every run must cover the evaluated topics and retrieve judged documents
+judged_docs = {d for q in qrels for d in qrels[q]}
+for s_, r_ in runs.items():
+    gone = [q for q in qids if not r_.get(q)]
+    if gone:
+        raise SystemExit(f"ERROR: run {s_} has no results for topics {gone[:10]}")
+    extra = sorted(set(r_) - {t['qid'] for t in topics})
+    if extra:
+        print(f"note: run {s_} has results for {len(extra)} topics that are not evaluated: {extra[:5]}")
+    if not any(d in judged_docs for q in qids for d in r_[q]):
+        raise SystemExit(f"ERROR: run {s_} retrieves no judged document at all - wrong qrels or run?")
+METRICS = tuple(DEFAULT_METRICS) + ("sndcg@10",)
+pq = {s: per_query(runs[s], qrels, METRICS, a.rel_level, qids) for s in systems}
 M = a.main_metric
 categories = [c for c in ["identifier", "homonym", "negation", "time", "paraphrase"] if c in set(cat.values())]
 
@@ -51,22 +64,22 @@ categories = [c for c in ["identifier", "homonym", "negation", "time", "paraphra
 summary = []
 for s in systems:
     row = {"system": s}
-    for m in DEFAULT_METRICS:
+    for m in METRICS:
         row[m] = float(np.mean([pq[s][m][q] for q in qids]))
     mu, lo, hi = bootstrap_ci([pq[s][M][q] for q in qids])
     row[f"{M}_ci_low"], row[f"{M}_ci_high"] = lo, hi
     summary.append(row)
 with open(out / f"summary{a.label}.csv", "w", newline="") as f:
-    w = csv.DictWriter(f, fieldnames=list(summary[0]))
+    w = csv.DictWriter(f, lineterminator="\n", fieldnames=list(summary[0]))
     w.writeheader()
     w.writerows(summary)
 
 with open(out / f"per_query{a.label}.csv", "w", newline="") as f:
-    w = csv.writer(f)
-    w.writerow(["system", "qid", "category"] + list(DEFAULT_METRICS))
+    w = csv.writer(f, lineterminator="\n")
+    w.writerow(["system", "qid", "category"] + list(METRICS))
     for s in systems:
         for q in qids:
-            w.writerow([s, q, cat[q]] + [f"{pq[s][m][q]:.4f}" for m in DEFAULT_METRICS])
+            w.writerow([s, q, cat[q]] + [f"{pq[s][m][q]:.4f}" for m in METRICS])
 
 # ------------------------------------------------------------------ per category with CIs
 means, lows, highs = {s: {} for s in systems}, {s: {} for s in systems}, {s: {} for s in systems}
@@ -76,17 +89,18 @@ for s in systems:
         qs = [q for q in qids if cat[q] == c]
         mu, lo, hi = bootstrap_ci([pq[s][M][q] for q in qs])
         means[s][c], lows[s][c], highs[s][c] = mu, lo, hi
-        rows.append({"system": s, "category": c, "n": len(qs), M: mu, "ci_low": lo, "ci_high": hi,
+        extra_m = {m: float(np.mean([pq[s][m][q] for q in qs])) for m in ("p@5", "mrr@10", "sndcg@10")}
+        rows.append({"system": s, "category": c, "n": len(qs), M: mu, "ci_low": lo, "ci_high": hi, **extra_m,
                      "hole@10": float(np.mean([pq[s]["hole@10"][q] for q in qs])) if qs else np.nan})
 with open(out / f"per_category{a.label}.csv", "w", newline="") as f:
-    w = csv.DictWriter(f, fieldnames=list(rows[0]))
+    w = csv.DictWriter(f, lineterminator="\n", fieldnames=list(rows[0]))
     w.writeheader()
     w.writerows(rows)
 
 # ------------------------------------------------------------------ significance
 sig = pairwise_tests({s: pq[s][M] for s in systems}, systems, n_perm=a.n_perm)
 with open(out / f"significance{a.label}.csv", "w", newline="") as f:
-    w = csv.DictWriter(f, fieldnames=list(sig[0]))
+    w = csv.DictWriter(f, lineterminator="\n", fieldnames=list(sig[0]))
     w.writeheader()
     w.writerows(sig)
 sig_cat = []
@@ -95,7 +109,7 @@ for c in categories:
     for r in pairwise_tests({s: {q: pq[s][M][q] for q in qs} for s in systems}, systems, n_perm=a.n_perm):
         sig_cat.append({"category": c, **r})
 with open(out / f"significance_by_category{a.label}.csv", "w", newline="") as f:
-    w = csv.DictWriter(f, fieldnames=list(sig_cat[0]))
+    w = csv.DictWriter(f, lineterminator="\n", fieldnames=list(sig_cat[0]))
     w.writeheader()
     w.writerows(sig_cat)
 
@@ -107,7 +121,7 @@ for s, run_path in zip(systems, a.runs):
     eff_rows.append({"system": s, "index_seconds": e.get("index_seconds"), "index_mb": e.get("index_mb"),
                      "mean_ms": e.get("mean_ms"), "p95_ms": e.get("p95_ms"), "hardware": e.get("hardware")})
 with open(out / f"efficiency{a.label}.csv", "w", newline="") as f:
-    w = csv.DictWriter(f, fieldnames=list(eff_rows[0]))
+    w = csv.DictWriter(f, lineterminator="\n", fieldnames=list(eff_rows[0]))
     w.writeheader()
     w.writerows(eff_rows)
 
@@ -119,7 +133,7 @@ for r in summary:
                  [R.fmt(r[m]) for m in mcols[:-1]] + [R.fmt(100 * r["hole@10"], 1) + r"\%"])
 R.write(tables / f"main_results{a.label}.tex", R.latex_table(
     trows, ["System"] + [R.METRIC_NAMES[m] for m in mcols], "l" + "c" * len(mcols),
-    f"Effectiveness on {len(qids)} cs.CR queries (graded judgments; binary metrics use grade $\\geq$ {a.rel_level}).",
+    f"{a.status + ' ' if a.status else ''}Effectiveness on {len(qids)} cs.CR queries (graded judgments; binary metrics use grade $\\geq$ {a.rel_level}).",
     f"tab:main{a.label}", bold_max_cols=range(1, len(mcols))))
 
 crows = []
@@ -130,10 +144,11 @@ R.write(tables / f"per_category{a.label}.tex", R.latex_table(
     f"{R.METRIC_NAMES[M]} by query category (10 queries each; indicative, see CIs in Fig.~\\ref{{fig:cat}}).",
     f"tab:cat{a.label}", bold_max_cols=range(1, len(categories) + 1)))
 
-srows = [[f"{R.pretty(r['a'])} vs {R.pretty(r['b'])}", f"{r['diff']:+.3f}", R.fmt(r["p"], 4),
-          R.fmt(r["p_holm"], 4), "yes" if r["significant"] else "no"] for r in sig]
+srows = [[f"{R.pretty(r['a'])} vs {R.pretty(r['b'])}", f"{r['diff']:+.3f}",
+          f"[{r['diff_ci_low']:+.3f}, {r['diff_ci_high']:+.3f}]", f"{r['a_better']}/{r['ties']}/{r['b_better']}",
+          R.fmt(r["p"], 4), R.fmt(r["p_holm"], 4), "yes" if r["significant"] else "no"] for r in sig]
 R.write(tables / f"significance{a.label}.tex", R.latex_table(
-    srows, ["Comparison", r"$\Delta$", "$p$", "$p_{\\text{Holm}}$", r"Sig.\ ($\alpha$=0.05)"], "lcccc",
+    srows, ["Comparison", r"$\Delta$", "95\\% CI", "W/T/L", "$p$", "$p_{\\text{Holm}}$", r"Sig.\ ($\alpha$=0.05)"], "lcccccc",
     f"Paired randomisation tests on {R.METRIC_NAMES[M]} ({a.n_perm:,} permutations, Holm--Bonferroni over all pairs).",
     f"tab:sig{a.label}"))
 
@@ -151,10 +166,16 @@ meta = {"qrels_sha256": sha256_file(a.qrels), "n_queries": len(qids),
         "runs": {s: sha256_file(p) for s, p in zip(systems, a.runs)}}
 (out / f"eval_meta{a.label}.json").write_text(json.dumps(meta, indent=2))
 
-print(f"{'system':16s}" + "".join(f"{R.METRIC_NAMES[m]:>9s}" for m in DEFAULT_METRICS))
+# sensitivity: only queries with at least one document of grade >= rel_level in the pool
+with_rel = [q for q in qids if any(g >= a.rel_level for g in qrels[q].values())]
+sens = {s: {m: float(np.mean([pq[s][m][q] for q in with_rel])) for m in ("ndcg@10", "p@5", "mrr@10")} for s in systems}
+(out / f"sensitivity_queries_with_relevant{a.label}.json").write_text(json.dumps(
+    {"n_queries": len(with_rel), "excluded": [q for q in qids if q not in with_rel], "means": sens}, indent=2))
+
+print(f"{'system':16s}" + "".join(f"{R.METRIC_NAMES.get(m, m):>9s}" for m in METRICS))
 for r in summary:
-    print(f"{r['system']:16s}" + "".join(f"{r[m]:9.3f}" for m in DEFAULT_METRICS))
+    print(f"{r['system']:16s}" + "".join(f"{r[m]:9.3f}" for m in METRICS))
 print("\nsignificance on", M)
 for r in sig:
-    print(f"  {r['a']:>14s} vs {r['b']:<14s} diff={r['diff']:+.3f}  p={r['p']:.4f}  p_holm={r['p_holm']:.4f}"
+    print(f"  {r['a']:>14s} vs {r['b']:<14s} diff={r['diff']:+.3f} [{r['diff_ci_low']:+.3f},{r['diff_ci_high']:+.3f}]  p={r['p']:.4f}  p_holm={r['p_holm']:.4f}"
           f"  {'*' if r['significant'] else ''}")

@@ -18,7 +18,7 @@ PRETTY = {
 CATEGORY_NAMES = {"identifier": "Exact identifier", "homonym": "Homonym", "negation": "Negation",
                   "time": "Time constraint", "paraphrase": "Paraphrase"}
 METRIC_NAMES = {"ndcg@10": "nDCG@10", "ndcg@5": "nDCG@5", "p@5": "P@5", "mrr@10": "MRR@10",
-                "map@10": "MAP@10", "recall@10": "R@10", "hole@10": "Hole@10"}
+                "map@10": "MAP@10", "recall@10": "R@10", "hole@10": "Hole@10", "sndcg@10": "sNDCG@10"}
 
 
 def pretty(s: str) -> str:

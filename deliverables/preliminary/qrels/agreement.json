@@ -1,0 +1,44 @@
+{
+  "n": 1339,
+  "kappa_linear": 0.7604497737216767,
+  "kappa_quadratic": 0.8290705042398359,
+  "exact_agreement": 0.7572815533980582,
+  "pairs": {
+    "Saksham-Suraj": {
+      "n": 228,
+      "kappa_linear": 0.6936032969001971,
+      "kappa_quadratic": 0.6969181798451856,
+      "exact_agreement": 0.7850877192982456
+    },
+    "Saksham-Swayam": {
+      "n": 224,
+      "kappa_linear": 0.8068839872470558,
+      "kappa_quadratic": 0.8778494623655914,
+      "exact_agreement": 0.7946428571428571
+    },
+    "Saksham-Tejas": {
+      "n": 245,
+      "kappa_linear": 0.8305958174061656,
+      "kappa_quadratic": 0.9056224091439611,
+      "exact_agreement": 0.8081632653061225
+    },
+    "Suraj-Swayam": {
+      "n": 213,
+      "kappa_linear": 0.7639122458339703,
+      "kappa_quadratic": 0.8555904230590423,
+      "exact_agreement": 0.755868544600939
+    },
+    "Suraj-Tejas": {
+      "n": 231,
+      "kappa_linear": 0.6843213296398893,
+      "kappa_quadratic": 0.7600634970407243,
+      "exact_agreement": 0.7445887445887446
+    },
+    "Swayam-Tejas": {
+      "n": 198,
+      "kappa_linear": 0.5926836903537409,
+      "kappa_quadratic": 0.6619421835531856,
+      "exact_agreement": 0.6363636363636364
+    }
+  }
+}

@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\small
+\caption{PRELIMINARY (unresolved conflicts at the upper grade). Effectiveness on 50 cs.CR queries (graded judgments; binary metrics use grade $\geq$ 2).}
+\label{tab:main}
+\begin{tabular}{lcccccc}
+\toprule
+System & nDCG@10 & nDCG@5 & P@5 & MRR@10 & MAP@10 & Hole@10 \\
+\midrule
+BM25 & 0.724 & 0.712 & 0.560 & 0.677 & 0.321 & 0.0\% \\
+E5 & 0.744 & 0.727 & \textbf{0.608} & 0.712 & \textbf{0.356} & 0.0\% \\
+SPECTER2 & 0.619 & 0.632 & 0.488 & 0.680 & 0.243 & 0.0\% \\
+BM25+E5 & \textbf{0.766} & \textbf{0.752} & 0.592 & \textbf{0.715} & 0.354 & 0.0\% \\
+BM25+SPECTER2 & 0.720 & 0.722 & 0.576 & 0.697 & 0.307 & 0.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}

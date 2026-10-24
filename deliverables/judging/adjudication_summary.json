@@ -1,0 +1,12 @@
+{
+  "conflicts": 325,
+  "by_priority": {
+    "0 vs 3": 21,
+    "gap of 2": 38,
+    "1 vs 2 (crosses the relevance line)": 75,
+    "gap of 1, same side": 191
+  },
+  "rows_without_paper_text": 325,
+  "sheet": "deliverables/judging/adjudication_sheet.csv",
+  "html": "deliverables/judging/adjudication_sheet.html"
+}

@@ -71,6 +71,17 @@ python -m pytest -q tests
 Every run writes a TREC run file plus `<run>.eff.json` (index time, index size, per-query latency,
 peak memory). All random choices use fixed seeds.
 
+## Finalising the judged results (current stage)
+The four exports are in `judging/exports/` (read-only, checksums in `deliverables/judging/audit_report.md`).
+```bash
+bash scripts/final_pipeline.sh preliminary          # audit, agreement, adjudication sheet, preliminary results
+# team fills `final` in deliverables/judging/adjudication_sheet.csv (copy it first)
+bash scripts/final_pipeline.sh final adjudicated.csv  # freezes data/qrels/qrels.txt and evaluates against it
+```
+`merge_judgments.py` refuses to write `data/qrels/qrels.txt` while any conflict lacks a final grade,
+refuses adjudication rows for pairs that were not conflicts, and never freezes fallback (preliminary)
+qrels. See `deliverables/README.md` for the status of every result.
+
 ## Judging pages
 All text is written into the HTML when the page is generated; the script on the page only
 handles one-at-a-time display, grades, saving in the browser and export. A viewer that does

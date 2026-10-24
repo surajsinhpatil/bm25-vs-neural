@@ -1,0 +1,119 @@
+{
+  "queries": 50,
+  "conflicts": 325,
+  "combinations_enumerated": 40269,
+  "mean_bounds": {
+    "bm25": [
+      0.6135196921725407,
+      0.7653909227939164
+    ],
+    "e5": [
+      0.6386371173412454,
+      0.7736635058652803
+    ],
+    "specter2": [
+      0.4744868575564019,
+      0.6558328376514708
+    ],
+    "bm25+e5": [
+      0.6566282536806324,
+      0.7981970539485161
+    ],
+    "bm25+specter2": [
+      0.5977641789410447,
+      0.7598169701894983
+    ]
+  },
+  "diff_bounds": {
+    "bm25 vs e5": [
+      -0.0988681386464647,
+      0.06769025952568257
+    ],
+    "bm25 vs specter2": [
+      0.001032056380891877,
+      0.2504517057923085
+    ],
+    "bm25 vs bm25+e5": [
+      -0.09180024852495325,
+      0.014604144382166109
+    ],
+    "bm25 vs bm25+specter2": [
+      -0.06408047668827616,
+      0.08762591873451064
+    ],
+    "e5 vs specter2": [
+      0.020190281148427296,
+      0.262492188784581
+    ],
+    "e5 vs bm25+e5": [
+      -0.08042951510369595,
+      0.03492180378566736
+    ],
+    "e5 vs bm25+specter2": [
+      -0.06700384804254758,
+      0.11839195787030164
+    ],
+    "specter2 vs bm25+e5": [
+      -0.28307470122448913,
+      -0.04592637417965501
+    ],
+    "specter2 vs bm25+specter2": [
+      -0.20158630439790604,
+      -0.03177658391415778
+    ],
+    "bm25+e5 vs bm25+specter2": [
+      -0.021446118043407746,
+      0.1221221822927828
+    ]
+  },
+  "worst_case_tests": {
+    "bm25 > specter2": {
+      "p": 0.976220237797622,
+      "p_holm_over_10": 1.0,
+      "significant": false
+    },
+    "e5 > specter2": {
+      "p": 0.5850241497585024,
+      "p_holm_over_10": 1.0,
+      "significant": false
+    },
+    "specter2 < bm25+e5": {
+      "p": 0.1965580344196558,
+      "p_holm_over_10": 1.0,
+      "significant": false
+    },
+    "specter2 < bm25+specter2": {
+      "p": 0.14706852931470685,
+      "p_holm_over_10": 1.0,
+      "significant": false
+    }
+  },
+  "random_adjudications": {
+    "samples": 500,
+    "permutations": 10000,
+    "share_significant": {
+      "bm25 vs e5": 0.0,
+      "bm25 vs specter2": 0.994,
+      "bm25 vs bm25+e5": 0.07,
+      "bm25 vs bm25+specter2": 0.0,
+      "e5 vs specter2": 1.0,
+      "e5 vs bm25+e5": 0.0,
+      "e5 vs bm25+specter2": 0.0,
+      "specter2 vs bm25+e5": 1.0,
+      "specter2 vs bm25+specter2": 1.0,
+      "bm25+e5 vs bm25+specter2": 0.162
+    },
+    "share_ranked_first": {
+      "bm25": 0.0,
+      "e5": 0.0,
+      "specter2": 0.0,
+      "bm25+e5": 1.0,
+      "bm25+specter2": 0.0
+    },
+    "orders": {
+      "bm25+e5 > e5 > bm25 > bm25+specter2 > specter2": 465,
+      "bm25+e5 > e5 > bm25+specter2 > bm25 > specter2": 33,
+      "bm25+e5 > bm25 > e5 > bm25+specter2 > specter2": 2
+    }
+  }
+}

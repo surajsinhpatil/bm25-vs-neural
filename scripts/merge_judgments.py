@@ -21,7 +21,8 @@ from irproj.pool import agreement, load_exports, merge, read_adjudication
 ap = argparse.ArgumentParser()
 ap.add_argument("--exports", nargs="+", required=True)
 ap.add_argument("--adjudication", default=None)
-ap.add_argument("--fallback", choices=["lower", "mean"], default=None)
+ap.add_argument("--fallback", choices=["lower", "upper", "mean"], default=None,
+                help="PRELIMINARY ONLY: resolve unadjudicated conflicts by this rule")
 ap.add_argument("--out", default="data/qrels")
 ap.add_argument("--freeze", action="store_true")
 ap.add_argument("--corpus", default=None, help="optional, adds titles to the disagreement sheet")
@@ -55,30 +56,65 @@ print(f"double-judged pairs: {agree['n']}, weighted kappa (linear) = {agree['kap
       f"quadratic = {agree['kappa_quadratic']:.3f}, exact agreement = {agree['exact_agreement']:.3f}")
 
 adj = read_adjudication(a.adjudication) if a.adjudication else {}
-qrels, unresolved = merge(judg, adj, a.fallback)
+prov = []
+try:
+    qrels, unresolved = merge(judg, adj, a.fallback, provenance=prov)
+except ValueError as e:
+    raise SystemExit(f"ERROR: {e}")
 
 titles = {}
 if a.corpus:
     from irproj.io import read_jsonl
     titles = {d["id"]: d["title"] for d in read_jsonl(a.corpus)}
-if unresolved:
+if unresolved and not a.adjudication:
     anns = sorted(judg)
     sheet = out / "disagreements.csv"
-    if not a.adjudication or Path(a.adjudication).resolve() != sheet.resolve():
-        with open(sheet, "w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            w.writerow(["qid", "docid", "title"] + anns + ["final"])
-            for u in sorted(unresolved, key=lambda r: (r["qid"], r["docid"])):
-                w.writerow([u["qid"], u["docid"], titles.get(u["docid"], "")] + [u.get(x, "") for x in anns] + [""])
-    print(f"{len(unresolved)} disagreements without a final grade -> {sheet}")
+    with open(sheet, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(["qid", "docid", "title"] + anns + ["final"])
+        for u in sorted(unresolved, key=lambda r: (int(r["qid"]) if r["qid"].isdigit() else r["qid"], r["docid"])):
+            w.writerow([u["qid"], u["docid"], titles.get(u["docid"], "")] + [u.get(x, "") for x in anns] + [""])
+    print(f"{len(unresolved)} disagreements without a final grade -> {sheet} "
+          "(scripts/make_adjudication_sheet.py makes a fuller sheet with the paper text)")
+elif unresolved:
+    print(f"{len(unresolved)} disagreements still have no final grade in {a.adjudication}")
 
 name = "qrels.txt" if not a.fallback else f"qrels.preliminary-{a.fallback}.txt"
 if unresolved and not a.fallback:
     print("qrels NOT written: resolve all disagreements first (or use --fallback for preliminary numbers)")
-else:
-    write_qrels(out / name, qrels)
-    n = sum(len(v) for v in qrels.values())
-    print(f"wrote {out / name}: {len(qrels)} queries, {n} judged documents")
-    if a.freeze and not a.fallback:
-        (out / "qrels.sha256").write_text(sha256_file(out / name) + "  qrels.txt\n")
-        print("frozen: checksum written to", out / "qrels.sha256")
+    raise SystemExit(2)
+write_qrels(out / name, qrels)
+n = sum(len(v) for v in qrels.values())
+print(f"wrote {out / name}: {len(qrels)} queries, {n} judged documents "
+      f"({sum(r['source'] == 'agreed' for r in prov)} agreed, {sum(r['source'] == 'adjudicated' for r in prov)} adjudicated, "
+      f"{sum(r['source'].startswith('fallback') for r in prov)} by fallback rule)")
+stem = name[:-4]
+with open(out / f"{stem}.provenance.csv", "w", newline="", encoding="utf-8") as f:
+    anns = sorted(judg)
+    w = csv.writer(f, lineterminator="\n")
+    w.writerow(["qid", "docid"] + [f"grade_{x}" for x in anns] + ["final", "source"])
+    for r in prov:
+        w.writerow([r["qid"], r["docid"]] + [r["grades"].get(x, "") for x in anns] + [r["final"], r["source"]])
+if a.freeze:
+    if a.fallback:
+        raise SystemExit("ERROR: --freeze cannot be combined with --fallback (preliminary qrels are never frozen)")
+    import datetime
+    import subprocess
+    try:
+        commit = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    except OSError:
+        commit = ""
+    record = {
+        "qrels": str(out / name), "qrels_sha256": sha256_file(out / name),
+        "frozen_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+        "git_commit": commit, "pool": a.pool, "pool_id": pool_obj["pool_id"] if a.pool and Path(a.pool).exists() else None,
+        "exports": {Path(p).name: sha256_file(p) for p in paths},
+        "adjudication_sheet": a.adjudication, "adjudication_sha256": sha256_file(a.adjudication) if a.adjudication else None,
+        "pairs": len(prov), "agreed": sum(r["source"] == "agreed" for r in prov),
+        "adjudicated": sum(r["source"] == "adjudicated" for r in prov),
+        "agreement": {k: agree[k] for k in ("n", "kappa_linear", "kappa_quadratic", "exact_agreement")},
+        "unjudged_documents": "treated as non-relevant (grade 0) by every metric; Hole@10 reports how often they occur",
+    }
+    (out / "qrels.sha256").write_text(record["qrels_sha256"] + "  qrels.txt\n")
+    (out / "provenance.json").write_text(json.dumps(record, indent=2))
+    print("frozen: checksum and provenance written to", out)

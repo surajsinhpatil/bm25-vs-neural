@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Paired randomisation tests on nDCG@10 (100,000 permutations, Holm--Bonferroni over all pairs).}
+\label{tab:sig}
+\begin{tabular}{lcccccc}
+\toprule
+Comparison & $\Delta$ & 95\% CI & W/T/L & $p$ & $p_{\text{Holm}}$ & Sig.\ ($\alpha$=0.05) \\
+\midrule
+BM25 vs E5 & -0.020 & [-0.078, +0.037] & 21/4/25 & 0.5055 & 1.0000 & no \\
+BM25 vs SPECTER2 & +0.105 & [+0.042, +0.174] & 29/0/21 & 0.0033 & 0.0232 & yes \\
+BM25 vs BM25+E5 & -0.042 & [-0.080, -0.007] & 19/5/26 & 0.0288 & 0.1726 & no \\
+BM25 vs BM25+SPECTER2 & +0.005 & [-0.034, +0.048] & 22/4/24 & 0.8386 & 1.0000 & no \\
+E5 vs SPECTER2 & +0.125 & [+0.068, +0.187] & 35/0/15 & 0.0001 & 0.0009 & yes \\
+E5 vs BM25+E5 & -0.021 & [-0.057, +0.015] & 21/5/24 & 0.2533 & 1.0000 & no \\
+E5 vs BM25+SPECTER2 & +0.025 & [-0.030, +0.080] & 25/3/22 & 0.4016 & 1.0000 & no \\
+SPECTER2 vs BM25+E5 & -0.147 & [-0.211, -0.085] & 14/0/36 & 0.0000 & 0.0001 & yes \\
+SPECTER2 vs BM25+SPECTER2 & -0.101 & [-0.146, -0.058] & 11/1/38 & 0.0000 & 0.0002 & yes \\
+BM25+E5 vs BM25+SPECTER2 & +0.046 & [+0.004, +0.093] & 26/3/21 & 0.0462 & 0.2308 & no \\
+\bottomrule
+\end{tabular}
+\end{table}

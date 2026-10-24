@@ -9,6 +9,7 @@ Conventions (checked against pytrec_eval in tests/test_metrics.py):
   * MRR@k is the reciprocal rank of the first relevant document within the top k
   * Recall@k is relative to the judged pool (only judged documents can be relevant)
   * Hole@k is the fraction of the top-k that was never judged [BEIR, Thakur et al. 2021]
+  * sNDCG@k (exploratory) is nDCG@k with gain max(grade - 1, 0)
 """
 from __future__ import annotations
 
@@ -31,6 +32,12 @@ def ndcg_at_k(ranked: Sequence[str], judged: Dict[str, int], k: int) -> float:
     ideal = sorted((g for g in judged.values() if g > 0), reverse=True)[:k]
     idcg = sum(g / math.log2(i + 2) for i, g in enumerate(ideal))
     return dcg / idcg if idcg > 0 else 0.0
+
+
+def strict_ndcg_at_k(ranked: Sequence[str], judged: Dict[str, int], k: int) -> float:
+    """Exploratory variant: gain = max(grade - 1, 0), so grade-1 documents ('on topic but does not
+    answer / breaks a condition') earn nothing. Not the pre-registered metric."""
+    return ndcg_at_k(ranked, {d: max(g - 1, 0) for d, g in judged.items()}, k)
 
 
 def precision_at_k(ranked, judged, k, rel_level):
@@ -81,6 +88,8 @@ def per_query(run: Run, qrels: Qrels, metrics: Sequence[str] = DEFAULT_METRICS,
             k = int(k)
             if name == "ndcg":
                 v = ndcg_at_k(ranked, judged, k)
+            elif name == "sndcg":
+                v = strict_ndcg_at_k(ranked, judged, k)
             elif name == "p":
                 v = precision_at_k(ranked, judged, k, rel_level)
             elif name == "recall":

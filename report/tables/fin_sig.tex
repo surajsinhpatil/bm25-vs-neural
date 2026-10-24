@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Paired randomisation tests on nDCG@10 over the 50 queries (100{,}000 permutations; Holm--Bonferroni over all 10 pairs; $\alpha=0.05$). PRELIMINARY: ranges over the lower and upper fallback runs; `depends' = significant in only one of them. Robustness to adjudication: Table~\ref{tab:fsens}.}
+\label{tab:fsig}
+\begin{tabular}{lccc}
+\toprule
+Comparison & $\Delta$nDCG@10 & $p_{\text{Holm}}$ & Significant \\
+\midrule
+BM25 $-$ E5 & $-$0.020 to $-$0.006 & 1.000 & no \\
+BM25 $-$ SPECTER2 & +0.105 to +0.158 & 0.001--0.023 & yes \\
+BM25 $-$ BM25+E5 & $-$0.042 to $-$0.035 & 0.173--0.345 & no \\
+BM25 $-$ BM25+SPECTER2 & +0.005 to +0.021 & 1.000 & no \\
+E5 $-$ SPECTER2 & +0.125 to +0.164 & $<$0.001 & yes \\
+E5 $-$ BM25+E5 & $-$0.029 to $-$0.021 & 0.624--1.000 & no \\
+E5 $-$ BM25+SPECTER2 & +0.025 to +0.027 & 1.000 & no \\
+SPECTER2 $-$ BM25+E5 & $-$0.193 to $-$0.147 & $<$0.001 & yes \\
+SPECTER2 $-$ BM25+SPECTER2 & $-$0.137 to $-$0.101 & $<$0.001 & yes \\
+BM25+E5 $-$ BM25+SPECTER2 & +0.046 to +0.056 & 0.074--0.231 & no \\
+\bottomrule
+\end{tabular}
+\end{table}

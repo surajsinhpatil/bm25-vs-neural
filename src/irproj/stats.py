@@ -55,9 +55,13 @@ def pairwise_tests(per_query: Dict[str, Dict[str, float]], systems: Sequence[str
         a = [per_query[s1][q] for q in qids]
         b = [per_query[s2][q] for q in qids]
         diff, p = paired_randomization_test(a, b, n_perm, seed)
+        _, lo, hi = bootstrap_ci(np.asarray(a) - np.asarray(b), seed=seed)
         key = f"{s1} vs {s2}"
         raw[key] = p
-        rows.append({"a": s1, "b": s2, "diff": diff, "p": p, "n": len(qids)})
+        d = np.asarray(a) - np.asarray(b)
+        rows.append({"a": s1, "b": s2, "diff": diff, "diff_ci_low": lo, "diff_ci_high": hi, "p": p, "n": len(qids),
+                     "a_better": int((d > 1e-12).sum()), "ties": int((np.abs(d) <= 1e-12).sum()),
+                     "b_better": int((d < -1e-12).sum())})
     adj = holm_bonferroni(raw, alpha)
     for r in rows:
         r["p_holm"], r["significant"] = adj[f"{r['a']} vs {r['b']}"]
