@@ -6,26 +6,26 @@ Every result here carries one label:
 - **exploratory**: too few queries for a conclusion
 - **blocked**: cannot be produced yet, with the reason
 
-## Current state (24 Oct 2026)
+## Current state (24 Oct 2026, qrels frozen)
 
 | Item | Status | Where |
 |---|---|---|
-| Judgment audit: 4 files, 2,678 judgments, every one of the 1,339 pool pairs double-judged, no integrity problems, record order matches the generated pages | validated | `judging/audit_report.md`, `judging/audit.json` |
+| Judgment audit: 4 files, 2,678 judgments, all 1,339 pool pairs double-judged, no integrity problems | validated | `judging/audit_report.md` |
 | Inter-annotator agreement: linear κ 0.760, quadratic κ 0.829 | validated | `judging/agreement_report.md` |
-| Adjudication sheet: 325 conflicts sorted by priority (21 are 0 vs 3; 38 have a gap of 2; 75 are 1 vs 2; 191 differ by one grade on the same side) | ready for the team | `judging/adjudication_sheet.csv` (fill `final`), `.html` for reading |
-| Final qrels + checksum + provenance | **blocked**: needs the team's adjudication | will be `../data/qrels/` |
-| Metric code = trec_eval on the real runs and qrels (max difference 3e-16) | validated | `preliminary/*/metric_validation.json` |
-| Overall results, 5 systems | preliminary (lower/upper fallback runs) | `preliminary/{lower,upper}/results/summary.csv` |
-| Significance tests (paired randomisation, 100k permutations, Holm over 10 pairs, paired bootstrap CI of each difference, win/tie/loss) | preliminary | `preliminary/*/results/significance.csv` |
-| Sensitivity to adjudication: exact bounds over all adjudications, adversarial worst case, 500 random adjudications | validated (as a sensitivity analysis) | `preliminary/sensitivity/adjudication_sensitivity.md` |
-| Per-category results with 95% bootstrap CIs | preliminary + exploratory | `preliminary/*/results/per_category.csv`, `figures/` |
-| Error analysis (examples show both annotators' original grades) | preliminary metrics; examples are grade-exact | `preliminary/*/analysis/error_analysis.md` |
-| Efficiency (from run logs, nothing estimated) | validated as measured | `efficiency/efficiency.md` |
-| BM25 vs Lucene and metric checks on SciFact; SciFact comparison of the 5 systems (implementation check only, not cs.CR) | validated | `validation/` |
-| BM25 k1/b sweep with 5-fold CV, tokenisation ablation (RQ5) | **blocked**: needs final qrels + corpus (Kaggle) | commands in `../scripts/final_pipeline.sh` |
-| Paper titles/abstracts in the adjudication sheet and error analysis | **blocked**: the paper text is not in this workspace | re-run with `PAGES=judging/round1` |
-| Final report | preliminary | `final_report_PRELIMINARY.pdf` (`../report/final_report.tex`) |
-| Presentation outline | done | `presentation_outline.md` |
+| Adjudication: 325 conflicts decided in team discussion, recorded by Suraj; 27 rows decided from titles or by "lower when unsure"; 1 rationale copied by mistake (grade kept) | done, disclosed | `../judging/adjudication/` (sheet + `ADJUDICATION_NOTE.txt`), `judging/recheck_28.*` |
+| Final qrels, SHA-256 `8cc5fac5…`, provenance (export and sheet hashes, git commit, κ, note) | validated (frozen) | `../data/qrels/` |
+| Metric code = trec_eval on the final qrels (max difference 3e-16) | validated | `final/metric_validation.json` |
+| Overall results, 5 systems, with bootstrap CIs | validated | `final/results/summary.csv`, `final/tables/` |
+| Significance (randomisation, 100k permutations, Holm over 10 pairs, CI of each difference, W/T/L) | validated | `final/results/significance.csv` |
+| Sensitivity of each comparison to adjudication (exact bounds, worst case, 500 random adjudications) | validated as a sensitivity analysis | `preliminary/sensitivity/` |
+| Per-category results with 95% CIs | exploratory (10 queries each) | `final/results/per_category.csv`, `final/figures/` |
+| Error analysis with titles and both annotators' original grades | validated (examples), metrics final | `final/analysis/error_analysis.md` |
+| Efficiency from run logs | validated as measured | `efficiency/efficiency.md` |
+| SciFact implementation checks (not cs.CR) | validated | `validation/` |
+| RQ5: BM25 k1/b sweep (5-fold CV) and tokenisation ablation | **blocked**: needs the full corpus, run on Kaggle | commands printed by `final_pipeline.sh final` |
+| Final report | final except RQ5, GitHub URL and contribution matrix | `final_report.pdf` |
+| Presentation outline | updated with the final numbers | `presentation_outline.md` |
+| Preliminary (pre-adjudication) results | superseded, kept for the record | `preliminary/` |
 
 ## What "lower" and "upper" mean, and what they do not
 Until adjudication, the fallback runs set every unresolved conflict to the lower of the two grades
@@ -43,10 +43,10 @@ often each comparison is significant across 500 random adjudications.
 recomputes from scratch.)
 
 ## After adjudication
-`final_pipeline.sh final` regenerates every table and figure. The **prose** of the report's results
-section (`report/final_report.tex`, Sections 5.2–5.4, Limitations, Conclusions) was written for the
-preliminary numbers. Re-read it against the final tables and remove the sensitivity paragraph before
-submitting. Each claim in it names the table it comes from.
+Done on 24 Oct 2026: `final_pipeline.sh final judging/adjudication/adjudication_sheet_completed.csv
+judging/adjudication/ADJUDICATION_NOTE.txt`. The report prose was rewritten for the final numbers and
+every figure in it was checked against `final/`. Re-running the final command re-freezes the same qrels
+(same checksum) with a new timestamp.
 
 ## Reproduce
 ```bash

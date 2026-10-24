@@ -6,7 +6,7 @@
     "1 vs 2 (crosses the relevance line)": 75,
     "gap of 1, same side": 191
   },
-  "rows_without_paper_text": 325,
+  "rows_without_paper_text": 0,
   "sheet": "deliverables/judging/adjudication_sheet.csv",
   "html": "deliverables/judging/adjudication_sheet.html"
 }

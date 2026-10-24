@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\small
+\caption{nDCG@10 by query category (10 queries each; indicative, see CIs in Fig.~\ref{fig:cat}).}
+\label{tab:cat}
+\begin{tabular}{lccccc}
+\toprule
+System & Exact identifier & Homonym & Negation & Time constraint & Paraphrase \\
+\midrule
+BM25 & \textbf{0.798} & 0.839 & 0.560 & 0.665 & 0.585 \\
+E5 & 0.662 & \textbf{0.846} & \textbf{0.677} & 0.688 & 0.692 \\
+SPECTER2 & 0.469 & 0.577 & 0.612 & 0.597 & 0.460 \\
+BM25+E5 & 0.755 & 0.845 & 0.596 & \textbf{0.752} & \textbf{0.773} \\
+BM25+SPECTER2 & 0.699 & 0.813 & 0.592 & 0.678 & 0.622 \\
+\bottomrule
+\end{tabular}
+\end{table}

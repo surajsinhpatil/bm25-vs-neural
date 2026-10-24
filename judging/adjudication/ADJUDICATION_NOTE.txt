@@ -1,0 +1,19 @@
+Adjudication of the 325 conflicting pairs (pool e2d5915c1130cb3c), completed 24 Oct 2026.
+
+How it was done (as stated by the team on 24 Oct 2026): the final grades were decided in a team
+discussion and recorded in the sheet by Surajsinh Patil; the adjudicated_by column therefore lists
+only "Suraj". There was no adjudicator independent of the original annotators: the annotators of a
+conflicting pair took part in the discussion of that pair. Suraj was one of the two annotators in 160
+of the 325 conflicts; his own grade was kept in 66 of them (41%), versus 51-55% for the other three.
+
+Every final grade is one of the two submitted grades (199 the lower, 126 the higher).
+
+Known issues, kept as decided by the team and disclosed:
+- 27 rows were resolved from the paper title or by a "lower grade when unsure" rule, as their
+  rationales say (25 of them to the lower grade; 6 cross the relevance line).
+  Listed in deliverables/judging/recheck_28.csv.
+- Query 5 / 2301.13581 ("Machine Learning and Port Scans: A Systematic Review"): its rationale text
+  was copied by mistake from the next row (2401.14979); the final grade 0 stands.
+
+The original annotator grades are preserved unchanged in judging/exports/ and, per pair, in
+data/qrels/qrels.provenance.csv.

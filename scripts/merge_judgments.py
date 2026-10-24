@@ -25,6 +25,7 @@ ap.add_argument("--fallback", choices=["lower", "upper", "mean"], default=None,
                 help="PRELIMINARY ONLY: resolve unadjudicated conflicts by this rule")
 ap.add_argument("--out", default="data/qrels")
 ap.add_argument("--freeze", action="store_true")
+ap.add_argument("--adjudication-note", default=None, help="text or path to a text file describing how adjudication was done")
 ap.add_argument("--corpus", default=None, help="optional, adds titles to the disagreement sheet")
 ap.add_argument("--pool", default="judging/round1/pool.json",
                 help="frozen pool the pages were generated from; exports from any other pool are refused")
@@ -114,6 +115,8 @@ if a.freeze:
         "adjudicated": sum(r["source"] == "adjudicated" for r in prov),
         "agreement": {k: agree[k] for k in ("n", "kappa_linear", "kappa_quadratic", "exact_agreement")},
         "unjudged_documents": "treated as non-relevant (grade 0) by every metric; Hole@10 reports how often they occur",
+        "adjudication_note": (Path(a.adjudication_note).read_text() if a.adjudication_note and Path(a.adjudication_note).exists()
+                              else a.adjudication_note),
     }
     (out / "qrels.sha256").write_text(record["qrels_sha256"] + "  qrels.txt\n")
     (out / "provenance.json").write_text(json.dumps(record, indent=2))

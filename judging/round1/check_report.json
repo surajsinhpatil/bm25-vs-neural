@@ -1,0 +1,60 @@
+{
+  "pool_id": "e2d5915c1130cb3c",
+  "corpus_sha256": "fda391ecc5b68074ce4ac7796f91b4f51aa8d540ff930ab4b78518632ace9ce9",
+  "corpus_matches_runs": true,
+  "pages": {
+    "judge_Suraj.html": {
+      "annotator": "Suraj",
+      "queries": 25,
+      "items": 672,
+      "phase1": 359,
+      "time_items_with_date": 138,
+      "problems": []
+    },
+    "judge_Tejas.html": {
+      "annotator": "Tejas",
+      "queries": 25,
+      "items": 674,
+      "phase1": 362,
+      "time_items_with_date": 127,
+      "problems": []
+    },
+    "judge_Swayam.html": {
+      "annotator": "Swayam",
+      "queries": 25,
+      "items": 635,
+      "phase1": 343,
+      "time_items_with_date": 92,
+      "problems": []
+    },
+    "judge_Saksham.html": {
+      "annotator": "Saksham",
+      "queries": 25,
+      "items": 697,
+      "phase1": 380,
+      "time_items_with_date": 125,
+      "problems": []
+    },
+    "practice_Suraj.html": {
+      "annotator": "Suraj",
+      "items": 30,
+      "problems": []
+    },
+    "practice_Tejas.html": {
+      "annotator": "Tejas",
+      "items": 30,
+      "problems": []
+    },
+    "practice_Swayam.html": {
+      "annotator": "Swayam",
+      "items": 30,
+      "problems": []
+    },
+    "practice_Saksham.html": {
+      "annotator": "Saksham",
+      "items": 30,
+      "problems": []
+    }
+  },
+  "ok": true
+}

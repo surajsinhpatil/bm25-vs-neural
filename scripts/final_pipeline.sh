@@ -5,7 +5,10 @@
 #       Audit + agreement, adjudication sheet, and PRELIMINARY results under two bounds
 #       (every unresolved conflict at the lower grade / at the higher grade) -> deliverables/preliminary
 #
-#   bash scripts/final_pipeline.sh final <adjudicated_sheet.csv>
+#   bash scripts/final_pipeline.sh candidate <adjudicated_sheet.csv>
+#       Same evaluation as final, into deliverables/candidate, without freezing anything.
+#
+#   bash scripts/final_pipeline.sh final <adjudicated_sheet.csv> [adjudication_note.txt]
 #       Freezes data/qrels/qrels.txt (checksum + provenance) from the agreed grades and the team's
 #       adjudicated grades, then evaluates everything against it -> deliverables/final.
 #       Refuses to run while any conflict in the sheet has no final grade.
@@ -43,9 +46,17 @@ if [ "$MODE" = preliminary ]; then
   done
   python3 scripts/adjudication_sensitivity.py --out deliverables/preliminary/sensitivity > /dev/null
   python3 scripts/make_report_tables.py --mode preliminary
+elif [ "$MODE" = candidate ]; then
+  # evaluates a completed adjudication sheet WITHOUT freezing data/qrels (for review before sign-off)
+  SHEET=${2:?usage: final_pipeline.sh candidate <adjudicated_sheet.csv>}
+  python3 scripts/merge_judgments.py --exports "$EXPORTS" --out deliverables/candidate/qrels --adjudication "$SHEET"
+  evaluate_all deliverables/candidate/qrels/qrels.txt deliverables/candidate \
+    "CANDIDATE (adjudicated, not yet signed off)."
 elif [ "$MODE" = final ]; then
   SHEET=${2:?usage: final_pipeline.sh final <adjudicated_sheet.csv>}
-  python3 scripts/merge_judgments.py --exports "$EXPORTS" --out data/qrels --adjudication "$SHEET" --freeze
+  NOTE=${3:-}
+  NOTEARG=(); [ -n "$NOTE" ] && NOTEARG=(--adjudication-note "$NOTE")
+  python3 scripts/merge_judgments.py --exports "$EXPORTS" --out data/qrels --adjudication "$SHEET" --freeze "${NOTEARG[@]}"
   sha256sum -c <(sed 's#  qrels.txt#  data/qrels/qrels.txt#' data/qrels/qrels.sha256)
   evaluate_all data/qrels/qrels.txt deliverables/final "Final (adjudicated qrels)."
   python3 scripts/make_report_tables.py --mode final

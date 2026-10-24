@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relevance Judging</title>
+<style>
+  :root { --bg:#f7f7f5; --card:#fff; --ink:#1d1d1b; --muted:#5f5e59; --line:#dddcd6;
+          --accent:#2f5d8a; --warn-bg:#fff4e0; --warn:#8a5a00;
+          --g0:#9b3b3b; --g1:#9a6a1f; --g2:#3d7a4e; --g3:#1f5c3a; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; font:15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background:var(--bg); color:var(--ink); }
+  header { position:sticky; top:0; z-index:2; background:var(--card); border-bottom:1px solid var(--line);
+           padding:10px 16px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  header h1 { font-size:16px; margin:0 10px 0 0; }
+  .bar { flex:1; min-width:140px; height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
+  .bar > div { height:100%; background:var(--accent); width:0; }
+  button { font:inherit; color:inherit; border:1px solid var(--line); background:var(--card);
+           padding:6px 12px; border-radius:6px; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  .notice { margin:12px 16px; padding:10px 14px; border-radius:8px; background:var(--warn-bg);
+            color:var(--warn); border:1px solid #f0d9a8; }
+  main { max-width:1150px; margin:0 auto; padding:12px 16px 40px; }
+  .item { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px;
+          margin:0 0 16px; display:grid; grid-template-columns: 340px 1fr; gap:18px; }
+  @media (max-width: 860px) { .item { grid-template-columns: 1fr; } }
+  .item-meta { grid-column:1 / -1; color:var(--muted); font-size:13px; }
+  .phase { display:inline-block; font-size:12px; padding:1px 8px; border-radius:10px;
+           background:#e6eef7; color:var(--accent); margin-right:6px; }
+  .qpanel { background:#fafaf8; border:1px solid var(--line); border-radius:8px; padding:12px; align-self:start; }
+  .qpanel h3 { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);
+               margin:10px 0 2px; }
+  .qpanel h3:first-child { margin-top:0; }
+  .qpanel p { margin:0; }
+  .qpanel .query { font-size:17px; font-weight:600; }
+  .title { font-size:18px; margin:0 0 6px; }
+  .doc-date { margin:0 0 8px; color:var(--muted); font-size:14px; }
+  .abstract { margin:0; white-space:pre-wrap; }
+  .grades { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:16px; }
+  @media (max-width: 600px) { .grades { grid-template-columns:1fr 1fr; } }
+  .grades button { text-align:left; padding:9px 8px; }
+  .grades button b { display:block; font-size:16px; }
+  .grades button.sel[data-g="0"] { background:var(--g0); color:#fff; border-color:var(--g0); }
+  .grades button.sel[data-g="1"] { background:var(--g1); color:#fff; border-color:var(--g1); }
+  .grades button.sel[data-g="2"] { background:var(--g2); color:#fff; border-color:var(--g2); }
+  .grades button.sel[data-g="3"] { background:var(--g3); color:#fff; border-color:var(--g3); }
+  .saved-grade { color:var(--muted); font-size:13px; margin:6px 0 0; min-height:1em; }
+  .nav { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0 0 12px; }
+  .muted { color:var(--muted); font-size:13px; }
+  kbd { border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 4px; font-size:12px; }
+  /* Without scripts: every item is listed, grading controls are hidden. */
+  .js-only { display:none; }
+  /* With scripts: one item at a time. */
+  html.js .js-only { display:revert; }
+  html.js .grades.js-only { display:grid; }
+  html.js .nav.js-only { display:flex; }
+  html.js .nojs-only { display:none; }
+  html.js .item { display:none; }
+  html.js .item.current { display:grid; }
+</style>
+</head>
+<body>
+<div id="page-meta" hidden data-annotator="Swayam" data-round="practice" data-pool-id="e2d5915c1130cb3c" data-n-items="30"></div>
+<header>
+  <h1>Relevance judging &mdash; Swayam <span class="muted">(practice, 30 items)</span></h1>
+  <span id="count" class="muted js-only"></span>
+  <div class="bar js-only"><div id="prog"></div></div>
+  <button type="button" id="nextUnjudged" class="js-only">Next unjudged</button>
+  <button type="button" id="export" class="js-only">Export judgments</button>
+  <button type="button" id="importBtn" class="js-only">Import</button>
+  <input type="file" id="import" accept=".json,application/json" hidden>
+</header>
+<div class="notice nojs-only">
+  Grading is off: this viewer is not running the page's script, so every item is listed below
+  for reading only. To grade, save this file and open it directly in Chrome, Edge or Firefox
+  (double-click the .html file, or drag it into a browser window).
+</div>
+<div class="notice js-only" id="storageWarning" hidden>
+  This browser does not let the page save your grades. They are kept only while this tab is
+  open, so click <b>Export judgments</b> before you close it.
+</div>
+<main>
+  <div class="nav js-only">
+    <button type="button" id="prev">&larr; Previous</button>
+    <button type="button" id="next">Next &rarr;</button>
+    <span class="muted">Keys: <kbd>0</kbd>&ndash;<kbd>3</kbd> grade and go to the next item,
+      <kbd>&larr;</kbd>/<kbd>&rarr;</kbd> move. Grades are saved in this browser automatically;
+      export them regularly as a backup.</span>
+  </div>
+<article class="item" id="item-0" data-i="0" data-qid="P1" data-docid="2406.03423" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 1 of 30 &middot; query P1</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">password strength meters</p>
+<h3>Description</h3><p class="desc">How well password strength meters estimate guessability.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Improving Users&#x27; Passwords with DPAR: a Data-driven Password Recommendation System</h2>
+
+<p class="abstract">Passwords are the primary authentication method online, but even with password policies and meters, users still find it hard to create strong and memorable passwords. In this paper, we propose DPAR: a Data-driven PAssword Recommendation system based on a dataset of 905 million leaked passwords. DPAR generates password recommendations by analyzing the user&#x27;s given password and suggesting specific tweaks that would make it stronger while still keeping it memorable and similar to the original password. We conducted two studies to evaluate our approach: verifying the memorability of generated passwords (n=317), and evaluating the strength and recall of DPAR recommendations against password meters (n=441). In a randomized experiment, we show that DPAR increased password strength by 34.8 bits on average and did not significantly affect the ability to recall their password. Furthermore, 36.6% of users accepted DPAR&#x27;s recommendations verbatim. We discuss our findings and their implications for enhancing password management with recommendation systems.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-1" data-i="1" data-qid="P1" data-docid="2505.08292" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 2 of 30 &middot; query P1</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">password strength meters</p>
+<h3>Description</h3><p class="desc">How well password strength meters estimate guessability.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">On the Account Security Risks Posed by Password Strength Meters</h2>
+
+<p class="abstract">Password strength meters (PSMs) have been widely used by websites to gauge password strength, encouraging users to create stronger passwords. Popular data-driven PSMs, e.g., based on Markov, Probabilistic Context-free Grammar (PCFG) and neural networks, alarm strength based on a model learned from real passwords. Despite their proven effectiveness, the secure utility that arises from the leakage of trained passwords remains largely overlooked. To address this gap, we analyze 11 PSMs and find that 5 data-driven meters are vulnerable to membership inference attacks that expose their trained passwords, and seriously, 3 rule-based meters openly disclose their blocked passwords. We specifically design a PSM privacy leakage evaluation approach, and uncover that a series of general data-driven meters are vulnerable to leaking between 10 4 to 10 5 trained passwords, with the PCFG-based models being more vulnerable than other counterparts; furthermore, we aid in deriving insights that the inherent utility-privacy tradeoff is not as severe as previously thought. To further exploit the risks, we develop novel meter-aware attacks when a clever attacker can filter the used passwords during compromising accounts on websites using the meter, and experimentally show that attackers targeting websites that deployed the popular Zxcvbn meter can compromise an additional 5.84% user accounts within 10 attempts, demonstrating the urgent need for privacy-preserving PSMs that protect the confidentiality of the meter&#x27;s used passwords. Finally, we sketch some counter-measures to mitigate these threats.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-2" data-i="2" data-qid="P1" data-docid="2001.04930" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 3 of 30 &middot; query P1</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">password strength meters</p>
+<h3>Description</h3><p class="desc">How well password strength meters estimate guessability.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Shades of Perception- User Factors in Identifying Password Strength</h2>
+
+<p class="abstract">The purpose of this study was to measure whether participant education, profession, and technical skill level exhibited a relationship with identification of password strength. Participants reviewed 50 passwords and labeled each as weak or strong. A Chi-square test of independence was used to measure relationships between education, profession, technical skill level relative to the frequency of weak and strong password identification. The results demonstrate significant relationships across all variable combinations except for technical skill and strong passwords which demonstrated no relationship. This research has three limitations. Data collection was dependent upon participant self-reporting and has limited externalized power. Further, the instrument was constructed under the assumption that all participants could read English and understood the concept of password strength. Finally, we did not control for external tool use (i.e., password strength meter). The results build upon existing literature insofar as the outcomes add to the collective understanding of user perception of passwords in specific and authentication in general. Whereas prior research has explored similar areas, such work has done so by having participants create passwords. This work measures perception of pre-generated passwords. The results demonstrate a need for further investigation into why users continue to rely on weak passwords. The originality of this work rests in soliciting a broad spectrum of participants and measuring potential correlations between participant education, profession, and technical skill level.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-3" data-i="3" data-qid="P1" data-docid="2004.07179" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 4 of 30 &middot; query P1</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">password strength meters</p>
+<h3>Description</h3><p class="desc">How well password strength meters estimate guessability.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Interpretable Probabilistic Password Strength Meters via Deep Learning</h2>
+
+<p class="abstract">Probabilistic password strength meters have been proved to be the most accurate tools to measure password strength. Unfortunately, by construction, they are limited to solely produce an opaque security estimation that fails to fully support the user during the password composition. In the present work, we move the first steps towards cracking the intelligibility barrier of this compelling class of meters. We show that probabilistic password meters inherently own the capability of describing the latent relation occurring between password strength and password structure. In our approach, the security contribution of each character composing a password is disentangled and used to provide explicit fine-grained feedback for the user. Furthermore, unlike existing heuristic constructions, our method is free from any human bias, and, more importantly, its feedback has a probabilistic interpretation. In our contribution: (1) we formulate interpretable probabilistic password strength meters; (2) we describe how they can be implemented via an efficient and lightweight deep learning framework suitable for client-side operability.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-4" data-i="4" data-qid="P1" data-docid="2208.10413" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 5 of 30 &middot; query P1</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">password strength meters</p>
+<h3>Description</h3><p class="desc">How well password strength meters estimate guessability.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">On Deep Learning in Password Guessing, a Survey</h2>
+
+<p class="abstract">The security of passwords is dependent on a thorough understanding of the strategies used by attackers. Unfortunately, real-world adversaries use pragmatic guessing tactics like dictionary attacks, which are difficult to simulate in password security research. Dictionary attacks must be carefully configured and modified to be representative of the actual threat. This approach, however, needs domain-specific knowledge and expertise that are difficult to duplicate. This paper compares various deep learning-based password guessing approaches that do not require domain knowledge or assumptions about users&#x27; password structures and combinations. The involved model categories are Recurrent Neural Networks, Generative Adversarial Networks, Autoencoder, and Attention mechanisms. Additionally, we proposed a promising research experimental design on using variations of IWGAN on password guessing under non-targeted offline attacks. Using these advanced strategies, we can enhance password security and create more accurate and efficient Password Strength Meters.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-5" data-i="5" data-qid="P1" data-docid="2407.14145" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 6 of 30 &middot; query P1</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">password strength meters</p>
+<h3>Description</h3><p class="desc">How well password strength meters estimate guessability.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">PassTSL: Modeling Human-Created Passwords through Two-Stage Learning</h2>
+
+<p class="abstract">Textual passwords are still the most widely used user authentication mechanism. Due to the close connections between textual passwords and natural languages, advanced technologies in natural language processing (NLP) and machine learning (ML) could be used to model passwords for different purposes such as studying human password-creation behaviors and developing more advanced password cracking methods for informing better defence mechanisms. In this paper, we propose PassTSL (modeling human-created Passwords through Two-Stage Learning), inspired by the popular pretraining-finetuning framework in NLP and deep learning (DL). We report how different pretraining settings affected PassTSL and proved its effectiveness by applying it to six large leaked password databases. Experimental results showed that it outperforms five state-of-the-art (SOTA) password cracking methods on password guessing by a significant margin ranging from 4.11% to 64.69% at the maximum point. Based on PassTSL, we also implemented a password strength meter (PSM), and our experiments showed that it was able to estimate password strength more accurately, causing fewer unsafe errors (overestimating the password strength) than two other SOTA PSMs when they produce the same rate of safe errors (underestimating the password strength): a neural-network based method and zxcvbn. Furthermore, we explored multiple finetuning settings, and our evaluations showed that, even a small amount of additional training data, e.g., only 0.1% of the pretrained data, can lead to over 3% improvement in password guessing on average. We also proposed a heuristic approach to selecting finetuning passwords based on JS (Jensen-Shannon) divergence and experimental results validated its usefulness. In summary, our contributions demonstrate the potential and feasibility of applying advanced NLP and ML methods to password modeling and cracking.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-6" data-i="6" data-qid="P2" data-docid="2102.07420" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 7 of 30 &middot; query P2</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">reentrancy vulnerabilities in smart contracts</p>
+<h3>Description</h3><p class="desc">Detecting or exploiting reentrancy bugs in Ethereum contracts.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Dynamic Vulnerability Detection on Smart Contracts Using Machine Learning</h2>
+
+<p class="abstract">In this work we propose Dynamit, a monitoring framework to detect reentrancy vulnerabilities in Ethereum smart contracts. The novelty of our framework is that it relies only on transaction metadata and balance data from the blockchain system; our approach requires no domain knowledge, code instrumentation, or special execution environment. Dynamit extracts features from transaction data and uses a machine learning model to classify transactions as benign or harmful. Therefore, not only can we find the contracts that are vulnerable to reentrancy attacks, but we also get an execution trace that reproduces the attack.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-7" data-i="7" data-qid="P2" data-docid="2103.08577" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 8 of 30 &middot; query P2</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">reentrancy vulnerabilities in smart contracts</p>
+<h3>Description</h3><p class="desc">Detecting or exploiting reentrancy bugs in Ethereum contracts.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Compositional Security for Reentrant Applications</h2>
+
+<p class="abstract">The disastrous vulnerabilities in smart contracts sharply remind us of our ignorance: we do not know how to write code that is secure in composition with malicious code. Information flow control has long been proposed as a way to achieve compositional security, offering strong guarantees even when combining software from different trust domains. Unfortunately, this appealing story breaks down in the presence of reentrancy attacks. We formalize a general definition of reentrancy and introduce a security condition that allows software modules like smart contracts to protect their key invariants while retaining the expressive power of safe forms of reentrancy. We present a security type system that provably enforces secure information flow; in conjunction with run-time mechanisms, it enforces secure reentrancy even in the presence of unknown code; and it helps locate and correct recent high-profile vulnerabilities.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-8" data-i="8" data-qid="P2" data-docid="2403.19112" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 9 of 30 &middot; query P2</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">reentrancy vulnerabilities in smart contracts</p>
+<h3>Description</h3><p class="desc">Detecting or exploiting reentrancy bugs in Ethereum contracts.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Uncover the Premeditated Attacks: Detecting Exploitable Reentrancy Vulnerabilities by Identifying Attacker Contracts</h2>
+
+<p class="abstract">Reentrancy, a notorious vulnerability in smart contracts, has led to millions of dollars in financial loss. However, current smart contract vulnerability detection tools suffer from a high false positive rate in identifying contracts with reentrancy vulnerabilities. Moreover, only a small portion of the detected reentrant contracts can actually be exploited by hackers, making these tools less effective in securing the Ethereum ecosystem in practice. In this paper, we propose BlockWatchdog, a tool that focuses on detecting reentrancy vulnerabilities by identifying attacker contracts. These attacker contracts are deployed by hackers to exploit vulnerable contracts automatically. By focusing on attacker contracts, BlockWatchdog effectively detects truly exploitable reentrancy vulnerabilities by identifying reentrant call flow. Additionally, BlockWatchdog is capable of detecting new types of reentrancy vulnerabilities caused by poor designs when using ERC tokens or user-defined interfaces, which cannot be detected by current rule-based tools. We implement BlockWatchdog using cross-contract static dataflow techniques based on attack logic obtained from an empirical study that analyzes attacker contracts from 281 attack incidents. BlockWatchdog is evaluated on 421,889 Ethereum contract bytecodes and identifies 113 attacker contracts that target 159 victim contracts, leading to the theft of Ether and tokens valued at approximately 908.6 million USD. Notably, only 18 of the identified 159 victim contracts can be reported by current reentrancy detection tools.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-9" data-i="9" data-qid="P2" data-docid="2506.05932" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 10 of 30 &middot; query P2</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">reentrancy vulnerabilities in smart contracts</p>
+<h3>Description</h3><p class="desc">Detecting or exploiting reentrancy bugs in Ethereum contracts.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Combating Reentrancy Bugs on Sharded Blockchains</h2>
+
+<p class="abstract">Reentrancy is a well-known source of smart contract bugs on Ethereum, leading e.g. to double-spending vulnerabilities in DeFi applications. But less is known about this problem in other blockchains, which can have significantly different execution models. Sharded blockchains in particular generally use an asynchronous messaging model that differs substantially from the synchronous and transactional model of Ethereum. We study the features of this model and its effect on reentrancy bugs on three examples: the Internet Computer (ICP) blockchain, NEAR Protocol, and MultiversX. We argue that this model, while useful for improving performance, also makes it easier to introduce reentrancy bugs. For example, reviews of the pre-production versions of some of the most critical ICP smart contracts found that 66% (10/15) of the reviewed contracts -- written by expert authors -- contained reentrancy bugs of medium or high severity, with potential damages in tens of millions of dollars. We evaluate existing Ethereum programming techniques (in particular the effects-checks-interactions pattern, and locking) to prevent reentrancy bugs in the context of this new messaging model and identify some issues with them. We then present novel Rust and Motoko patterns that can be leveraged on ICP to solve these issues. Finally, we demonstrate that the formal verification tool TLA+ can be used to find and eliminate such bugs in real world smart contracts on sharded blockchains.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-10" data-i="10" data-qid="P2" data-docid="2105.02881" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 11 of 30 &middot; query P2</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">reentrancy vulnerabilities in smart contracts</p>
+<h3>Description</h3><p class="desc">Detecting or exploiting reentrancy bugs in Ethereum contracts.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Reentrancy Vulnerability Identification in Ethereum Smart Contracts</h2>
+
+<p class="abstract">Ethereum Smart contracts use blockchain to transfer values among peers on networks without central agency. These programs are deployed on decentralized applications running on top of the blockchain consensus protocol to enable people to make agreements in a transparent and conflict-free environment. The security vulnerabilities within those smart contracts are a potential threat to the applications and have caused huge financial losses to their users. In this paper, we present a framework that combines static and dynamic analysis to detect Reentrancy vulnerabilities in Ethereum smart contracts. This framework generates an attacker contract based on the ABI specifications of smart contracts under test and analyzes the contract interaction to precisely report Reentrancy vulnerability. We conducted a preliminary evaluation of our proposed framework on 5 modified smart contracts from Etherscan and our framework was able to detect the Reentrancy vulnerability in all our modified contracts. Our framework analyzes smart contracts statically to identify potentially vulnerable functions and then uses dynamic analysis to precisely confirm Reentrancy vulnerability, thus achieving increased performance and reduced false positives.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-11" data-i="11" data-qid="P2" data-docid="2402.09094" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 12 of 30 &middot; query P2</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">reentrancy vulnerabilities in smart contracts</p>
+<h3>Description</h3><p class="desc">Detecting or exploiting reentrancy bugs in Ethereum contracts.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Unity is Strength: Enhancing Precision in Reentrancy Vulnerability Detection of Smart Contract Analysis Tools</h2>
+
+<p class="abstract">Reentrancy is one of the most notorious vulnerabilities in smart contracts, resulting in significant digital asset losses. However, many previous works indicate that current Reentrancy detection tools suffer from high false positive rates. Even worse, recent years have witnessed the emergence of new Reentrancy attack patterns fueled by intricate and diverse vulnerability exploit mechanisms. Unfortunately, current tools face a significant limitation in their capacity to adapt and detect these evolving Reentrancy patterns. Consequently, ensuring precise and highly extensible Reentrancy vulnerability detection remains critical challenges for existing tools. To address this issue, we propose a tool named ReEP, designed to reduce the false positives for Reentrancy vulnerability detection. Additionally, ReEP can integrate multiple tools, expanding its capacity for vulnerability detection. It evaluates results from existing tools to verify vulnerability likelihood and reduce false positives. ReEP also offers excellent extensibility, enabling the integration of different detection tools to enhance precision and cover different vulnerability attack patterns. We perform ReEP to eight existing state-of-the-art Reentrancy detection tools. The average precision of these eight tools increased from the original 0.5% to 73% without sacrificing recall. Furthermore, ReEP exhibits robust extensibility. By integrating multiple tools, the precision further improved to a maximum of 83.6%. These results demonstrate that ReEP effectively unites the strengths of existing works, enhances the precision of Reentrancy vulnerability detection tools.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-12" data-i="12" data-qid="P3" data-docid="2111.02356" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 13 of 30 &middot; query P3</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">differential privacy for location data</p>
+<h3>Description</h3><p class="desc">Protecting location traces with differential privacy.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Towards Sparse Federated Analytics: Location Heatmaps under Distributed Differential Privacy with Secure Aggregation</h2>
+
+<p class="abstract">We design a scalable algorithm to privately generate location heatmaps over decentralized data from millions of user devices. It aims to ensure differential privacy before data becomes visible to a service provider while maintaining high data accuracy and minimizing resource consumption on users&#x27; devices. To achieve this, we revisit distributed differential privacy based on recent results in secure multiparty computation, and we design a scalable and adaptive distributed differential privacy approach for location analytics. Evaluation on public location datasets shows that this approach successfully generates metropolitan-scale heatmaps from millions of user samples with a worst-case client communication overhead that is significantly smaller than existing state-of-the-art private protocols of similar accuracy.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-13" data-i="13" data-qid="P3" data-docid="2207.00633" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 14 of 30 &middot; query P3</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">differential privacy for location data</p>
+<h3>Description</h3><p class="desc">Protecting location traces with differential privacy.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Hide me Behind the Noise: Local Differential Privacy for Indoor Location Privacy</h2>
+
+<p class="abstract">The advent of numerous indoor location-based services (LBSs) and the widespread use of many types of mobile devices in indoor environments have resulted in generating a massive amount of people&#x27;s location data. While geo-spatial data contains sensitive information about personal activities, collecting it in its raw form may lead to the leak of personal information relating to the people, violating their privacy. This paper proposes a novel privacy-aware framework for aggregating the indoor location data employing the Local Differential Privacy (LDP) technique, in which the user location data is changed locally in the user&#x27;s device and is sent to the aggregator afterward. Therefore, the users&#x27; locations are kept hidden from a server or any attackers. The practical feasibility of applying the proposed framework is verified by two real-world datasets. The impact of dataset properties, the privacy mechanisms, and the privacy level on our framework are also investigated. The experimental results indicate that the presented framework can protect the location information of users, and the accuracy of the population frequency of different zones in the indoor area is close to that of the original population frequency with no knowledge about the location of people indoors.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-14" data-i="14" data-qid="P3" data-docid="2404.07366" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 15 of 30 &middot; query P3</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">differential privacy for location data</p>
+<h3>Description</h3><p class="desc">Protecting location traces with differential privacy.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Differentially Private GANs for Generating Synthetic Indoor Location Data</h2>
+
+<p class="abstract">The advent of location-based services has led to the widespread adoption of indoor localization systems, which enable location tracking of individuals within enclosed spaces such as buildings. While these systems provide numerous benefits such as improved security and personalized services, they also raise concerns regarding privacy violations. As such, there is a growing need for privacy-preserving solutions that can protect users&#x27; sensitive location information while still enabling the functionality of indoor localization systems. In recent years, Differentially Private Generative Adversarial Networks (DPGANs) have emerged as a powerful methodology that aims to protect the privacy of individual data points while generating realistic synthetic data similar to original data. DPGANs combine the power of generative adversarial networks (GANs) with the privacy-preserving technique of differential privacy (DP). In this paper, we introduce an indoor localization framework employing DPGANs in order to generate privacy-preserving indoor location data. We evaluate the performance of our framework on a real-world indoor localization dataset and demonstrate its effectiveness in preserving privacy while maintaining the accuracy of the localization system.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-15" data-i="15" data-qid="P3" data-docid="2402.11526" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 16 of 30 &middot; query P3</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">differential privacy for location data</p>
+<h3>Description</h3><p class="desc">Protecting location traces with differential privacy.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Measuring Privacy Loss in Distributed Spatio-Temporal Data</h2>
+
+<p class="abstract">Statistics about traffic flow and people&#x27;s movement gathered from multiple geographical locations in a distributed manner are the driving force powering many applications, such as traffic prediction, demand prediction, and restaurant occupancy reports. However, these statistics are often based on sensitive location data of people, and hence privacy has to be preserved while releasing them. The standard way to do this is via differential privacy, which guarantees a form of rigorous, worst-case, person-level privacy. In this work, motivated by several counter-intuitive features of differential privacy in distributed location applications, we propose an alternative privacy loss against location reconstruction attacks by an informed adversary. Our experiments on real and synthetic data demonstrate that our privacy loss better reflects our intuitions on individual privacy violation in the distributed spatio-temporal setting.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-16" data-i="16" data-qid="P3" data-docid="1705.02108" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 17 of 30 &middot; query P3</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">differential privacy for location data</p>
+<h3>Description</h3><p class="desc">Protecting location traces with differential privacy.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Optimizing noise level for perturbing geo-location data</h2>
+
+<p class="abstract">With the tremendous increase in the number of smart phones, app stores have been overwhelmed with applications requiring geo-location access in order to provide their users better services through personalization. Revealing a user&#x27;s location to these third party apps, no matter at what frequency, is a severe privacy breach which can have unpleasant social consequences. In order to prevent inference attacks derived from geo-location data, a number of location obfuscation techniques have been proposed in the literature. However, none of them provides any objective measure of privacy guarantee. Some work has been done to define differential privacy for geo-location data in the form of geo-indistinguishability with l privacy guarantee. These techniques do not utilize any prior background information about the Points of Interest (PoIs) of a user and apply Laplacian noise to perturb all the location coordinates. Intuitively, the utility of such a mechanism can be improved if the noise distribution is derived after considering some prior information about PoIs. In this paper, we apply the standard definition of differential privacy on geo-location data. We use first principles to model various privacy and utility constraints, prior background information available about the PoIs (distribution of PoI locations in a 1D plane) and the granularity of the input required by different types of apps, in order to produce a more accurate and a utility maximizing differentially private algorithm for geo-location data at the OS level. We investigate this for a particular category of apps and for some specific scenarios. This will also help us to verify that whether Laplacian noise is still the optimal perturbation when we have such prior information.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-17" data-i="17" data-qid="P3" data-docid="2204.04792" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 18 of 30 &middot; query P3</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">differential privacy for location data</p>
+<h3>Description</h3><p class="desc">Protecting location traces with differential privacy.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Robust Fingerprint of Location Trajectories Under Differential Privacy</h2>
+
+<p class="abstract">Directly releasing those data raises privacy and liability (e.g., due to unauthorized distribution of such datasets) concerns since location data contain users&#x27; sensitive information, e.g., regular moving patterns and favorite spots. To address this, we propose a novel fingerprinting scheme that simultaneously identifies unauthorized redistribution of location datasets and provides differential privacy guarantees for the shared data. Observing data utility degradation due to differentially-private mechanisms, we introduce a utility-focused post-processing scheme to regain spatio-temporal correlations between points in a location trajectory. We further integrate this post-processing scheme into our fingerprinting scheme as a sampling method. The proposed fingerprinting scheme alleviates the degradation in the utility of the shared dataset due to the noise introduced by differentially-private mechanisms (i.e., adds the fingerprint by preserving the publicly known statistics of the data). Meanwhile, it does not violate differential privacy throughout the entire process due to immunity to post-processing, a fundamental property of differential privacy. Our proposed fingerprinting scheme is robust against known and well-studied attacks against a fingerprinting scheme including random flipping attacks, correlation-based flipping attacks, and collusions among multiple parties, which makes it hard for the attackers to infer the fingerprint codes and avoid accusation. Via experiments on two real-life location datasets and two synthetic ones, we show that our scheme achieves high fingerprinting robustness and outperforms existing approaches. Besides, the proposed fingerprinting scheme increases data utility for differentially-private datasets, which is beneficial for data analyzers.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-18" data-i="18" data-qid="P4" data-docid="1704.02803" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 19 of 30 &middot; query P4</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">solving CAPTCHAs with machine learning</p>
+<h3>Description</h3><p class="desc">Automated CAPTCHA breaking using ML.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Making Defeating CAPTCHAs Harder for Bots</h2>
+
+<p class="abstract">For a number of years, many websites have used CAPTCHAs to filter out interactions by bots. However, attackers have found ways to circumvent CAPTCHAs by programming bots to solve or bypass them, or even relay them for humans to solve. In order to reduce the chances of success of such attacks, CAPTCHAs can be strengthened by the addition of certain safeguards. In this paper, we discuss seven existing safeguards as well as five novel safeguards designed to make circumventing CAPTCHAs harder. These safeguards are not mutually exclusive and can add multiple layers of protection to a CAPTCHA. We further provide a high-level comparison of their effectiveness in addressing the threat posed by CAPTCHA-defeating techniques. In order to focus on safeguards that are usable, we restrict our attention to those which have minimal adverse effect on the user experience.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-19" data-i="19" data-qid="P4" data-docid="2307.12108" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 20 of 30 &middot; query P4</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">solving CAPTCHAs with machine learning</p>
+<h3>Description</h3><p class="desc">Automated CAPTCHA breaking using ML.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">An Empirical Study &amp; Evaluation of Modern CAPTCHAs</h2>
+
+<p class="abstract">For nearly two decades, CAPTCHAs have been widely used as a means of protection against bots. Throughout the years, as their use grew, techniques to defeat or bypass CAPTCHAs have continued to improve. Meanwhile, CAPTCHAs have also evolved in terms of sophistication and diversity, becoming increasingly difficult to solve for both bots (machines) and humans. Given this long-standing and still-ongoing arms race, it is critical to investigate how long it takes legitimate users to solve modern CAPTCHAs, and how they are perceived by those users. In this work, we explore CAPTCHAs in the wild by evaluating users&#x27; solving performance and perceptions of unmodified currently-deployed CAPTCHAs. We obtain this data through manual inspection of popular websites and user studies in which 1,400 participants collectively solved 14,000 CAPTCHAs. Results show significant differences between the most popular types of CAPTCHAs: surprisingly, solving time and user perception are not always correlated. We performed a comparative study to investigate the effect of experimental context -- specifically the difference between solving CAPTCHAs directly versus solving them as part of a more natural task, such as account creation. Whilst there were several potential confounding factors, our results show that experimental context could have an impact on this task, and must be taken into account in future CAPTCHA studies. Finally, we investigate CAPTCHA-induced user task abandonment by analyzing participants who start and do not complete the task.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-20" data-i="20" data-qid="P4" data-docid="2306.07543" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 21 of 30 &middot; query P4</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">solving CAPTCHAs with machine learning</p>
+<h3>Description</h3><p class="desc">Automated CAPTCHA breaking using ML.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">How Secure is Your Website? A Comprehensive Investigation on CAPTCHA Providers and Solving Services</h2>
+
+<p class="abstract">Completely Automated Public Turing Test To Tell Computers and Humans Apart (CAPTCHA) has been implemented on many websites to identify between harmful automated bots and legitimate users. However, the revenue generated by the bots has turned circumventing CAPTCHAs into a lucrative business. Although earlier studies provided information about text-based CAPTCHAs and the associated CAPTCHA-solving services, a lot has changed in the past decade regarding content, suppliers, and solvers of CAPTCHA. We have conducted a comprehensive investigation of the latest third-party CAPTCHA providers and CAPTCHA-solving services&#x27; attacks. We dug into the details of CAPTCHA-As-a-Service and the latest CAPTCHA-solving services and carried out adversarial experiments on CAPTCHAs and CAPTCHA solvers. The experiment results show a worrying fact: most latest CAPTCHAs are vulnerable to both human solvers and automated solvers. New CAPTCHAs based on hard AI problems and behavior analysis are needed to stop CAPTCHA solvers.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-21" data-i="21" data-qid="P4" data-docid="2502.05461" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 22 of 30 &middot; query P4</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">solving CAPTCHAs with machine learning</p>
+<h3>Description</h3><p class="desc">Automated CAPTCHA breaking using ML.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">IllusionCAPTCHA: A CAPTCHA based on Visual Illusion</h2>
+
+<p class="abstract">CAPTCHAs have long been essential tools for protecting applications from automated bots. Initially designed as simple questions to distinguish humans from bots, they have become increasingly complex to keep pace with the proliferation of CAPTCHA-cracking techniques employed by malicious actors. However, with the advent of advanced large language models (LLMs), the effectiveness of existing CAPTCHAs is now being undermined. To address this issue, we have conducted an empirical study to evaluate the performance of multimodal LLMs in solving CAPTCHAs and to assess how many attempts human users typically need to pass them. Our findings reveal that while LLMs can solve most CAPTCHAs, they struggle with those requiring complex reasoning type of CAPTCHA that also presents significant challenges for human users. Interestingly, our user study shows that the majority of human participants require a second attempt to pass these reasoning CAPTCHAs, a finding not reported in previous research. Based on empirical findings, we present IllusionCAPTCHA, a novel security mechanism employing the &quot;Human-Easy but AI-Hard&quot; paradigm. This new CAPTCHA employs visual illusions to create tasks that are intuitive for humans but highly confusing for AI models. Furthermore, we developed a structured, step-by-step method that generates misleading options, which particularly guide LLMs towards making incorrect choices and reduce their chances of successfully solving CAPTCHAs. Our evaluation shows that IllusionCAPTCHA can effectively deceive LLMs 100% of the time. Moreover, our structured design significantly increases the likelihood of AI errors when attempting to solve these challenges. Results from our user study indicate that 86.95% of participants successfully passed the CAPTCHA on their first attempt, outperforming other CAPTCHA systems.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-22" data-i="22" data-qid="P4" data-docid="2405.07496" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 23 of 30 &middot; query P4</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">solving CAPTCHAs with machine learning</p>
+<h3>Description</h3><p class="desc">Automated CAPTCHA breaking using ML.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Oedipus: LLM-enchanced Reasoning CAPTCHA Solver</h2>
+
+<p class="abstract">CAPTCHAs have become a ubiquitous tool in safeguarding applications from automated bots. Over time, the arms race between CAPTCHA development and evasion techniques has led to increasingly sophisticated and diverse designs. The latest iteration, reasoning CAPTCHAs, exploits tasks that are intuitively simple for humans but challenging for conventional AI technologies, thereby enhancing security measures. Driven by the evolving AI capabilities, particularly the advancements in Large Language Models (LLMs), we investigate the potential of multimodal LLMs to solve modern reasoning CAPTCHAs. Our empirical analysis reveals that, despite their advanced reasoning capabilities, LLMs struggle to solve these CAPTCHAs effectively. In response, we introduce Oedipus, an innovative end-to-end framework for automated reasoning CAPTCHA solving. Central to this framework is a novel strategy that dissects the complex and human-easy-AI-hard tasks into a sequence of simpler and AI-easy steps. This is achieved through the development of a Domain Specific Language (DSL) for CAPTCHAs that guides LLMs in generating actionable sub-steps for each CAPTCHA challenge. The DSL is customized to ensure that each unit operation is a highly solvable subtask revealed in our previous empirical study. These sub-steps are then tackled sequentially using the Chain-of-Thought (CoT) methodology. Our evaluation shows that Oedipus effectively resolves the studied CAPTCHAs, achieving an average success rate of 63.5%. Remarkably, it also shows adaptability to the most recent CAPTCHA designs introduced in late 2023, which are not included in our initial study. This prompts a discussion on future strategies for designing reasoning CAPTCHAs that can effectively counter advanced AI solutions.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-23" data-i="23" data-qid="P4" data-docid="2010.16204" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 24 of 30 &middot; query P4</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">solving CAPTCHAs with machine learning</p>
+<h3>Description</h3><p class="desc">Automated CAPTCHA breaking using ML.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Capture the Bot: Using Adversarial Examples to Improve CAPTCHA Robustness to Bot Attacks</h2>
+
+<p class="abstract">To this date, CAPTCHAs have served as the first line of defense preventing unauthorized access by (malicious) bots to web-based services, while at the same time maintaining a trouble-free experience for human visitors. However, recent work in the literature has provided evidence of sophisticated bots that make use of advancements in machine learning (ML) to easily bypass existing CAPTCHA-based defenses. In this work, we take the first step to address this problem. We introduce CAPTURE, a novel CAPTCHA scheme based on adversarial examples. While typically adversarial examples are used to lead an ML model astray, with CAPTURE, we attempt to make a &quot;good use&quot; of such mechanisms. Our empirical evaluations show that CAPTURE can produce CAPTCHAs that are easy to solve by humans while at the same time, effectively thwarting ML-based bot solvers.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-24" data-i="24" data-qid="P5" data-docid="2310.14565" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 25 of 30 &middot; query P5</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">private set intersection protocols</p>
+<h3>Description</h3><p class="desc">Two-party or multi-party PSI protocols and their efficiency.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">PEPSI: Practically Efficient Private Set Intersection in the Unbalanced Setting</h2>
+
+<p class="abstract">Two parties with private data sets can find shared elements using a Private Set Intersection (PSI) protocol without revealing any information beyond the intersection. Circuit PSI protocols privately compute an arbitrary function of the intersection - such as its cardinality, and are often employed in an unbalanced setting where one party has more data than the other. Existing protocols are either computationally inefficient or require extensive server-client communication on the order of the larger set. We introduce Practically Efficient PSI or PEPSI, a non-interactive solution where only the client sends its encrypted data. PEPSI can process an intersection of 1024 client items with a million server items in under a second, using less than 5 MB of communication. Our work is over 4 orders of magnitude faster than an existing non-interactive circuit PSI protocol and requires only 10% of the communication. It is also up to 20 times faster than the work of Ion et al., which computes a limited set of functions and has communication costs proportional to the larger set. Our work is the first to demonstrate that non-interactive circuit PSI can be practically applied in an unbalanced setting.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-25" data-i="25" data-qid="P5" data-docid="2309.07406" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 26 of 30 &middot; query P5</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">private set intersection protocols</p>
+<h3>Description</h3><p class="desc">Two-party or multi-party PSI protocols and their efficiency.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Secure and Scalable Circuit-based Protocol for Multi-Party Private Set Intersection</h2>
+
+<p class="abstract">We propose a novel protocol for computing a circuit which implements the multi-party private set intersection functionality (PSI). Circuit-based approach has advantages over using custom protocols to achieve this task, since many applications of PSI do not require the computation of the intersection itself, but rather specific functional computations over the items in the intersection. Our protocol represents the pioneering circuit-based multi-party PSI protocol, which builds upon and optimizes the two-party SCS protocol. By using secure computation between two parties, our protocol sidesteps the complexities associated with multi-party interactions and demonstrates good scalability. In order to mitigate the high overhead associated with circuit-based constructions, we have further enhanced our protocol by utilizing simple hashing scheme and permutation-based hash functions. These tricks have enabled us to minimize circuit size by employing bucketing techniques while simultaneously attaining noteworthy reductions in both computation and communication expenses.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-26" data-i="26" data-qid="P5" data-docid="2209.13913" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 27 of 30 &middot; query P5</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">private set intersection protocols</p>
+<h3>Description</h3><p class="desc">Two-party or multi-party PSI protocols and their efficiency.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Faster Secure Comparisons with Offline Phase for Efficient Private Set Intersection</h2>
+
+<p class="abstract">In a Private section intersection (PSI) protocol, Alice and Bob compute the intersection of their respective sets without disclosing any element not in the intersection. PSI protocols have been extensively studied in the literature and are deployed in industry. With state-of-the-art protocols achieving optimal asymptotic complexity, performance improvements are rare and can only improve complexity constants. In this paper, we present a new private, extremely efficient comparison protocol that leads to a PSI protocol with low constants. A useful property of our comparison protocol is that it can be divided into an online and an offline phase. All expensive cryptographic operations are performed during the offline phase, and the online phase performs only four fast field operations per comparison. This leads to an incredibly fast online phase, and our evaluation shows that it outperforms related work, including KKRT (CCS 16), VOLE-PSI (EuroCrypt 21), and OKVS (Crypto 21). We also evaluate standard approaches to implement the offline phase using different trust assumptions: cryptographic, hardware, and a third party (dealer model).</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-27" data-i="27" data-qid="P5" data-docid="2311.11951" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 28 of 30 &middot; query P5</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">private set intersection protocols</p>
+<h3>Description</h3><p class="desc">Two-party or multi-party PSI protocols and their efficiency.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">An Improved Quantum Private Set Intersection Protocol Based on Hadamard Gates</h2>
+
+<p class="abstract">Recently, Liu and Yin (Int. J. Theor. Phys. 60, 2074-2083 (2021)) proposed a two-party private set intersection protocol based on quantum Fourier transform. We find the participant can deduce the other party&#x27;s private information, which violates the security requirement of private set computation. In order to solve this problem, an improved private set intersection protocol based on Hadamard gate is proposed. Firstly, the more feasible Hadamard gates are used to perform on the original n qubits instead of the quantum Fourier transform, which may reduce the difficulty of implementation. In addition, through the exclusive OR calculation, the participant&#x27;s private information is randomly chosen and encoded on the additional n qubits, which prevents participants from obtaining the result of the difference set S-diff , and then avoids the internal leakage of private information. Finally, the correctness and security analysis are conducted to show the proposed protocol can guarantee the correctness of computation result as well as resist outside attacks and participant internal attacks.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-28" data-i="28" data-qid="P5" data-docid="2308.14741" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 29 of 30 &middot; query P5</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">private set intersection protocols</p>
+<h3>Description</h3><p class="desc">Two-party or multi-party PSI protocols and their efficiency.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Advancement on Security Applications of Private Intersection Sum Protocol</h2>
+
+<p class="abstract">Secure computation protocols combine inputs from involved parties to generate an output while keeping their inputs private. Private Set Intersection (PSI) is a secure computation protocol that allows two parties, who each hold a set of items, to learn the intersection of their sets without revealing anything else about the items. Private Intersection Sum (PIS) extends PSI when the two parties want to learn the cardinality of the intersection, as well as the sum of the associated integer values for each identifier in the intersection, but nothing more. Finally, Private Join and Compute (PJC) is a scalable extension of PIS protocol to help organizations work together with confidential data sets. The extensions proposed in this paper include: (a) extending PJC protocol to additional data columns and applying columnar aggregation based on supported homomorphic operations, (b) exploring Ring Learning with Errors (RLWE) homomorphic encryption schemes to apply arithmetic operations such as sum and sum of squares, (c) ensuring stronger security using mutual authentication of communicating parties using certificates, and (d) developing a Website to operationalize such a service offering. We applied our results to develop a Proof-of-Concept solution called JingBing, a voter list validation service that allows different states to register, acquire secure communication modules, install it, and then conduct authenticated peer-to-peer communication. We conclude our paper with directions for future research to make such a solution scalable for practical real-life scenarios.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+<article class="item" id="item-29" data-i="29" data-qid="P5" data-docid="2401.12542" data-phase="1">
+<div class="item-meta"><span class="phase">Phase 1 (judge first)</span> Item 30 of 30 &middot; query P5</div>
+<section class="qpanel">
+<h3>Query</h3><p class="query">private set intersection protocols</p>
+<h3>Description</h3><p class="desc">Two-party or multi-party PSI protocols and their efficiency.</p>
+<h3>What counts as relevant</h3><p class="narr">Practice query: grade with the standard 0-3 scale.</p>
+</section>
+<section class="dpanel">
+<h2 class="title">Multi-Party Private Set Intersection: A Circuit-Based Protocol with Jaccard Similarity for Secure and Efficient Anomaly Detection in Network Traffic</h2>
+
+<p class="abstract">We present a new circuit-based protocol for multi-party private set intersection (PSI) that allows m parties to compute the intersection of their datasets without revealing any additional information about the items outside the intersection. Building upon the two-party Sort-Compare-Shuffle (SCS) protocol, we seamlessly extend it to a multi-party setting. Demonstrating its practicality through implementation, our protocol exhibits acceptable performance. Specifically, with 7 parties, each possessing a set size of 2 12 , our protocol completes in just 19 seconds. Moreover, circuit-based protocols like ours have an advantage over using custom protocols to perform more complex computation. We substantiate this advantage by incorporating a module for calculating the Jaccard similarity metric of the private sets which can be used in the application domain of network traffic analysis for anomaly detection. This extension showcases the versatility of our protocol beyond set intersection computations, demonstrating its efficacy in preserving privacy while efficiently identifying abnormal patterns in network flow.</p>
+<div class="grades js-only" role="group" aria-label="Grade">
+<button type="button" data-g="0"><b>0</b> Not relevant</button>
+<button type="button" data-g="1"><b>1</b> On topic, but does not answer the query or breaks a condition</button>
+<button type="button" data-g="2"><b>2</b> Relevant</button>
+<button type="button" data-g="3"><b>3</b> Highly relevant</button>
+</div>
+<p class="saved-grade js-only" aria-live="polite"></p>
+</section>
+</article>
+</main>
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var items = Array.prototype.slice.call(document.querySelectorAll("article.item"));
+  var meta = document.getElementById("page-meta");
+  var annotator = meta.getAttribute("data-annotator");
+  var roundName = meta.getAttribute("data-round");
+  var poolId = meta.getAttribute("data-pool-id");
+  var KEY = "irjudge:" + annotator + ":" + roundName + ":" + poolId;
+  var grades = {};
+  var store = null;
+  try {
+    store = window.localStorage;
+    store.setItem("irjudge:test", "1");
+    store.removeItem("irjudge:test");
+  } catch (e) { store = null; }
+  if (store) {
+    try { grades = JSON.parse(store.getItem(KEY) || "{}") || {}; } catch (e) { grades = {}; }
+  }
+  root.className += " js";
+  if (!store) { document.getElementById("storageWarning").hidden = false; }
+  if (!items.length) { return; }
+
+  function key(el) { return el.getAttribute("data-qid") + "\t" + el.getAttribute("data-docid"); }
+  function save() { if (store) { try { store.setItem(KEY, JSON.stringify(grades)); } catch (e) {} } }
+  function judgedCount() {
+    var n = 0;
+    for (var j = 0; j < items.length; j++) { if (grades.hasOwnProperty(key(items[j]))) { n++; } }
+    return n;
+  }
+  var i = 0;
+  for (var j = 0; j < items.length; j++) { if (!grades.hasOwnProperty(key(items[j]))) { i = j; break; } }
+
+  function render() {
+    for (var j = 0; j < items.length; j++) { items[j].classList.toggle("current", j === i); }
+    var el = items[i];
+    var g = grades.hasOwnProperty(key(el)) ? String(grades[key(el)]) : null;
+    var btns = el.querySelectorAll(".grades button");
+    for (var b = 0; b < btns.length; b++) { btns[b].classList.toggle("sel", btns[b].getAttribute("data-g") === g); }
+    el.querySelector(".saved-grade").textContent = g === null ? "Not graded yet." : "Saved grade: " + g;
+    var n = judgedCount();
+    document.getElementById("count").textContent = n + " of " + items.length + " judged";
+    document.getElementById("prog").style.width = (100 * n / items.length) + "%";
+  }
+  function setGrade(g) {
+    grades[key(items[i])] = g;
+    save();
+    if (i < items.length - 1) { i++; }
+    render();
+    window.scrollTo(0, 0);
+  }
+  items.forEach(function (el) {
+    var btns = el.querySelectorAll(".grades button");
+    for (var b = 0; b < btns.length; b++) {
+      btns[b].addEventListener("click", function (ev) {
+        setGrade(parseInt(ev.currentTarget.getAttribute("data-g"), 10));
+      });
+    }
+  });
+  document.getElementById("prev").onclick = function () { if (i > 0) { i--; } render(); };
+  document.getElementById("next").onclick = function () { if (i < items.length - 1) { i++; } render(); };
+  document.getElementById("nextUnjudged").onclick = function () {
+    for (var s = 1; s <= items.length; s++) {
+      var j = (i + s) % items.length;
+      if (!grades.hasOwnProperty(key(items[j]))) { i = j; break; }
+    }
+    render();
+  };
+  document.addEventListener("keydown", function (e) {
+    if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) { return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) { return; }
+    if (e.key === "0" || e.key === "1" || e.key === "2" || e.key === "3") { setGrade(parseInt(e.key, 10)); }
+    else if (e.key === "ArrowRight") { if (i < items.length - 1) { i++; } render(); }
+    else if (e.key === "ArrowLeft") { if (i > 0) { i--; } render(); }
+  });
+  document.getElementById("export").onclick = function () {
+    var out = { annotator: annotator, round: roundName, pool_id: poolId,
+                exported: new Date().toISOString(), judgments: [] };
+    items.forEach(function (el) {
+      var k = key(el);
+      out.judgments.push({ qid: el.getAttribute("data-qid"), docid: el.getAttribute("data-docid"),
+                           grade: grades.hasOwnProperty(k) ? grades[k] : null });
+    });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: "application/json" }));
+    a.download = "judgments_" + annotator + "_" + roundName + ".json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  };
+  document.getElementById("importBtn").onclick = function () { document.getElementById("import").click(); };
+  document.getElementById("import").onchange = function (ev) {
+    var f = ev.target.files[0];
+    if (!f) { return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var d;
+      try { d = JSON.parse(reader.result); } catch (e) { alert("Not a judgments file."); return; }
+      if (d.annotator !== annotator || d.round !== roundName) {
+        alert("This file belongs to " + d.annotator + " (" + d.round + "), not to " + annotator + " (" + roundName + ").");
+        return;
+      }
+      var valid = {};
+      items.forEach(function (el) { valid[key(el)] = true; });
+      (d.judgments || []).forEach(function (j) {
+        var k = j.qid + "\t" + j.docid;
+        if (valid[k] && j.grade !== null && j.grade !== undefined) { grades[k] = j.grade; }
+      });
+      save();
+      render();
+    };
+    reader.readAsText(f);
+  };
+  render();
+})();
+</script>
+</body>
+</html>

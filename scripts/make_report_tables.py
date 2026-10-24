@@ -114,7 +114,7 @@ R.write(OUT / "fin_g1.tex", R.latex_table(
 
 # ---------------------------------------------------------------- adjudication sensitivity (preliminary only)
 sens_path = D / "preliminary" / "sensitivity" / "adjudication_sensitivity.json"
-if a.mode == "preliminary" and sens_path.exists():
+if sens_path.exists():   # independent of the final grades: kept in both modes
     sj = json.loads(sens_path.read_text())
     rows = []
     for k, (lo, hi) in sj["diff_bounds"].items():
@@ -126,7 +126,7 @@ if a.mode == "preliminary" and sens_path.exists():
                      ("n.s." if not wc["significant"] else "sig.") if wc else "--"])
     R.write(OUT / "fin_sens.tex", R.latex_table(
         rows, ["Comparison", "Exact range of $\\Delta$nDCG@10", "Sign can flip", "Sig.\\ in random adj.", "Worst case"],
-        "lcccc", f"Sensitivity to adjudication. Exact range of each mean difference over every adjudication that picks "
+        "lcccc", f"Sensitivity to adjudication (computed from the two annotators' grades, independent of the adjudicated grades). Exact range of each mean difference over every adjudication that picks "
         f"one of the two submitted grades ({sj['combinations_enumerated']:,} per-query combinations enumerated); share of "
         f"{sj['random_adjudications']['samples']} random adjudications in which the pair is significant (Holm, 10 pairs); and "
         "the test on the single most adversarial adjudication.", "tab:fsens"))
@@ -139,8 +139,7 @@ if a.mode == "preliminary" and sens_path.exists():
                 "finBoundE": f"{mb['e5'][0]:.3f}--{mb['e5'][1]:.3f}"}
 else:
     sens_mac = {}
-    if a.mode == "final":
-        (OUT / "fin_sens.tex").unlink(missing_ok=True)      # preliminary-only table must not survive
+    (OUT / "fin_sens.tex").unlink(missing_ok=True)
 
 # ---------------------------------------------------------------- figure + macros
 fig_src = dirs[0] / "figures" / "per_category.pdf"

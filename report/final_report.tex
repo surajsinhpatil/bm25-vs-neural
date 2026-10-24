@@ -28,11 +28,9 @@ Surajsinh Patil & 2025H1030058P & Tejas Mahajan & 2025H1030057P\\
 Swayam Kumud & 2025H1030063P & Saksham Singhal & 2025H1030208P
 \end{tabular}\\[3pt]
 \textbf{Repository:} \repourl\\[6pt]
-\fcolorbox{red!60!black}{red!5}{\parbox{0.92\linewidth}{\small\textbf{Status: \finStatus.}
-Every cs.CR effectiveness number below is shown as a range: the value with all unresolved
-conflicts at the lower grade, and with all of them at the higher grade. These two runs are a sensitivity
-check, not bounds (nDCG is not monotone in the grades). Exact bounds over all adjudications, and
-results for random adjudications, are given in Table~\ref{tab:fsens}. The SciFact numbers (Section~\ref{sec:sci}) only validate the
+\fcolorbox{black!40}{black!3}{\parbox{0.92\linewidth}{\small\textbf{Status:} final results on the frozen,
+adjudicated qrels (\finPairs{} judged pairs; checksum and provenance in \texttt{data/qrels/}). Per-category
+results are exploratory (10 queries each). The SciFact numbers (Section~\ref{sec:sci}) only validate the
 implementation and are not cs.CR results.}}
 \end{center}
 
@@ -84,8 +82,13 @@ missing, duplicated or outside the pool.
 \textbf{Agreement.} Weighted Cohen's $\kappa$ = \finKappaLin{} (linear) and \finKappaQuad{}
 (quadratic); $\kappa$ on binary relevance (grade $\geq 2$) = \finKappaBin{}; exact agreement
 \finExact{}. This meets the protocol's target of $\kappa\geq 0.6$. \finConflicts{} pairs conflict:
-\finZeroThree{} are 0 vs 3, and \finCross{} fall on opposite sides of the relevance line. By protocol,
-conflicts are adjudicated by the team before the qrels are frozen.
+\finZeroThree{} are 0 vs 3, and \finCross{} fall on opposite sides of the relevance line.
+\textbf{Adjudication.} All conflicts were resolved in a team discussion and recorded by one author;
+every final grade is one of the two submitted grades. There was no independent adjudicator: the
+annotators of a pair took part in its discussion. The recorder was one of the two annotators in 160
+conflicts and kept his own grade in 41\% of them (51--55\% for the other three). 27 decisions were
+taken from the title or by a ``lower grade when unsure'' rule, as their rationales record. The qrels were
+then frozen with a SHA-256 checksum and a provenance file.
 \textbf{Metrics.} The primary metric is nDCG@10 with gain equal to the grade. P@5, MRR@10 and MAP@10
 use grade $\geq 2$. Unjudged documents count as non-relevant; Hole@10 reports how often they occur.
 Our metric code matches \texttt{trec\_eval} (via \texttt{pytrec\_eval}) on every query of every run,
@@ -104,56 +107,58 @@ On the same collection E5 (\sciEfive) beats BM25 (\sciBM) significantly ($p_{\te
 \subsection{Main results on cs.CR}
 \inputor{tables/fin_main.tex}{}
 \inputor{tables/fin_sig.tex}{}
-Tables~\ref{tab:fmain} and~\ref{tab:fsig} show that Hole@10 is 0 for every system: every document in
-every top 10 was judged. Table~\ref{tab:fsens} shows how far adjudication can move the comparisons.
-We enumerated every way of resolving each conflict to one of its two submitted grades, which gives exact
-ranges of the mean differences. We also drew \finSensN{} random adjudications.
+Hole@10 is 0 for every system: every document in every top 10 was judged (Table~\ref{tab:fmain}).
+\textbf{RQ1:} E5 and BM25 are statistically indistinguishable (E5 +0.023, 95\% CI $-$0.038 to +0.084,
+$p_{\text{Holm}}=0.93$). E5 is better on 24 queries and BM25 on 23. The data give no support for the
+claim that a general dense model beats BM25 on this collection.
+\textbf{RQ3:} SPECTER2 is the weakest system, 0.147 below BM25 and 0.170 below E5 (both
+$p_{\text{Holm}}\leq 0.005$), and significantly below both hybrids. Its citation-based training does
+not transfer to short ad-hoc queries.
+\textbf{RQ4:} BM25+E5 is the best system (nDCG@10 0.744). It is significantly better than BM25 (+0.055,
+$p_{\text{Holm}}=0.023$; better on 32 queries, worse on 16) and than BM25+SPECTER2 (+0.063,
+$p_{\text{Holm}}=0.031$), but not than E5 (+0.031, $p_{\text{Holm}}=0.59$). So the hybrid does not
+beat \emph{both} of its components. BM25+SPECTER2 recovers most of SPECTER2's loss but does not beat
+BM25. Excluding the query with no relevant document leaves every significance decision unchanged.
+\textbf{How much depends on adjudication} (Table~\ref{tab:fsens}, computed from the two annotators'
+grades alone). No way of resolving the conflicts can reverse the four SPECTER2 deficits, and they are
+significant in 99--100\% of \finSensN{} random adjudications. BM25+E5 has the highest mean in
+\finSensFirst\% of them. By contrast, its significant advantage over BM25 appears in only 7\% of random
+adjudications, and the sign of that difference could even flip under some adjudications. That
+significance is therefore a property of our adjudication rather than a robust effect, and we treat it
+with caution.
 \inputor{tables/fin_sens.tex}{}
-\textbf{RQ1:} E5 and BM25 are statistically indistinguishable overall (difference 0.006--0.020 in
-favour of E5, $p_{\text{Holm}}=1$). The sign of the difference depends on adjudication, and the
-difference is significant in none of the random adjudications. The data give no support for the claim
-that a general dense model beats BM25 on this collection.
-\textbf{RQ3:} SPECTER2 is the weakest system, significantly worse than BM25, E5 and both hybrids
-(0.105--0.164 below BM25 and E5). No adjudication can reverse the direction of these four differences,
-and they are significant in 99--100\% of random adjudications. A deliberately adversarial adjudication
-can make them non-significant, however, so this conclusion is final only after the real adjudication.
-SPECTER2's citation-based training does not transfer to short ad-hoc queries.
-\textbf{RQ4:} BM25+E5 has the highest mean nDCG@10 under both fallback runs (0.699--0.766) and in
-\finSensFirst\% of random adjudications (exact range over all adjudications \finBoundHybE), but its gains
-over BM25 (+0.035--0.042) and E5 (+0.021--0.029) are not significant after correction. Fusing BM25 with
-SPECTER2 recovers most of SPECTER2's loss but does not beat BM25.
 
 \subsection{By query type (RQ2, exploratory)}
 \inputor{tables/fin_cat.tex}{}
 \IfFileExists{figures/fin_per_category.pdf}{\begin{figure}[t]\centering
 \includegraphics[width=\linewidth]{figures/fin_per_category.pdf}
-\caption{nDCG@10 per category with 95\% bootstrap CIs, lower bound (hatched = hybrids). Exploratory.}
+\caption{nDCG@10 per category with 95\% bootstrap CIs (hatched = hybrids). Exploratory.}
 \label{fig:fcat}\end{figure}}{}
-Under both fallback runs (Table~\ref{tab:fcat}), BM25 leads on \emph{exact identifiers} (0.708--0.825
-vs.\ 0.583--0.722 for E5), while E5 leads on \emph{paraphrases} (0.656--0.723 vs.\ 0.558--0.621) and
-\emph{negation} (0.676--0.692 vs.\ 0.562--0.601). BM25+E5 is best on paraphrase and time queries.
-On homonyms, BM25, E5 and BM25+E5 are all high (above 0.77). With 10 queries per category the CIs
-overlap widely, so these are hypotheses for follow-up rather than findings. Within-category tests (Holm-corrected within each category) find only a few significant
-differences, none of them in both fallback runs: BM25+E5 over BM25 on paraphrases (lower bound), and
-SPECTER2 below each of the other four systems on homonyms (upper bound).
+BM25 leads on \emph{exact identifiers} (0.798 vs.\ 0.662 for E5), while E5 leads on \emph{negation}
+(0.677 vs.\ 0.560) and \emph{paraphrases} (0.692 vs.\ 0.585; Table~\ref{tab:fcat}). BM25+E5 is best on
+time (0.752) and paraphrase (0.773) queries. On homonyms, BM25, E5 and BM25+E5 are all near 0.84. With
+10 queries per category the CIs overlap widely (Fig.~\ref{fig:fcat}), so these are hypotheses rather
+than findings. Within-category tests (Holm within each category) find SPECTER2 below each of the other
+four systems on homonyms, and BM25+E5 above BM25 on paraphrases.
 
 \subsection{Error analysis}
 \inputor{tables/fin_g1.tex}{}
-\textbf{Conditions are ignored.} On negation queries, 76--81\% of BM25's top 10 are graded 1, mostly
-papers that break the exclusion. The figure is 59--63\% for E5 and 68--74\% for BM25+E5
-(Table~\ref{tab:fg1}). BM25 removes ``not'' as a stopword. For ``anonymous communication systems that
-are not based on Tor'', nine of BM25's top 10 were graded 1 by both annotators, the grade the
-relevance criteria give to papers about Tor itself. Six of E5's top 10 were graded 2 or 3 by both
-annotators. On time queries, 39--58\% of each system's top 10 is graded 1. Counting from
-first-version dates, 30--38\% of each system's top 10 breaks the date condition; a rule-based date
-filter (stretch goal S2) removes all of these.
+\textbf{Conditions are ignored.} On negation queries, 81\% of BM25's top 10 are graded 1, mostly
+papers that break the exclusion. The figure is 60\% for E5 and 71\% for BM25+E5 (Table~\ref{tab:fg1}).
+BM25 removes ``not'' as a stopword: for ``anonymous communication systems that are not based on Tor'',
+seven of its top 10 titles name Tor (e.g.\ ``Analyzing Trends in Tor'', ``DarkHorse: \ldots{} Tor Onion
+Services''), all graded 1. E5's top 10 includes DC-nets, Atom and Pirates (grade 3). On time queries,
+40--54\% of each system's top 10 is graded 1. Counting from first-version dates, 30--38\% of each
+system's top 10 breaks the date condition; a rule-based date filter (stretch goal S2) removes all of these.
 \textbf{Paraphrases defeat lexical matching.} For ``programs that lock a victim's files and demand
-payment to unlock them'', BM25 ranks four non-relevant documents in its top five, while E5 returns
-ransomware papers that both annotators graded 2--3.
+payment to unlock them'', BM25 ranks ``Scalable Time-Lock Puzzle'' and a digital-payment framework near
+the top (nDCG@10 0.18), while E5 returns ransomware papers (0.82).
+\textbf{Identifiers defeat dense matching.} For ``replay attacks on TLS~1.3 0-RTT early data'', E5's top
+five are replay attacks in unrelated fields such as space launch and sharded ledgers (0.18), while BM25
+finds TLS~1.3 papers (0.82).
 \textbf{The two systems complement each other.} Of the relevant documents in the BM25 and E5 top 10s,
-\finBoth{} are found by both, \finOnlyBM{} only by BM25 and \finOnlyE{} only by E5. This explains why
-fusion helps even though neither component is better overall. Full examples are in
-\texttt{deliverables/*/analysis/error\_analysis.md}.
+\finBoth{} are found by both, \finOnlyBM{} only by BM25 and \finOnlyE{} only by E5. This is why fusion
+helps. Full examples are in \texttt{deliverables/final/analysis/error\_analysis.md}.
 
 \subsection{Efficiency}
 \inputor{tables/efficiency_prelim.tex}{}
@@ -163,29 +168,29 @@ CPU into 29\,MB and answers in 1.6\,ms. Each dense index is 116\,MB (4$\times$ l
 6--7\,ms. BM25+E5 therefore buys its effectiveness at roughly 12$\times$ the query cost of BM25.
 
 \subsection{BM25 sensitivity (RQ5)}
-\pending{Blocked until the qrels are frozen: \texttt{bm25\_sweep.py} (with 5-fold cross-validation,
-so no tuning on the test queries is reported as a test score) and \texttt{tokenizer\_ablation.py} need
-the corpus and run on Kaggle.}
+\pending{Not yet run. \texttt{bm25\_sweep.py} (5-fold cross-validation, so no test-tuned score is
+reported) and \texttt{tokenizer\_ablation.py} need the full corpus and run on Kaggle against the frozen qrels.}
 
 \section{Limitations}
-(1) The results are preliminary until the \finConflicts{} conflicts are adjudicated. The system order is
-the same in \finSensTopOrder\% of random adjudications, but significance is guaranteed only for the real one. (2) There are 50 queries, 10 per category, so category effects are
-exploratory. (3) The pool contains only the top 10 of five systems. Hole@10 is 0 for these systems, but
-recall-oriented metrics, and any system outside the pool, would be biased. (4) No relevant document
-(grade $\geq 2$) was found for one query (AES-GCM nonce reuse); it counts for every system, and removing
-it does not change the system order. (5) The authors wrote the queries and judged them. (6) The dense
-models may have seen arXiv abstracts during pre-training. (7) A grade of 1 earns nDCG gain, so systems
-partly get credit for documents that break a condition; an exploratory strict variant (no gain for
-grade 1, \texttt{sNDCG@10} in the result files) gives the same system order, except that BM25 and
-BM25+SPECTER2 tie under the upper bound.
+(1) There are 50 queries, 10 per category, so category effects are exploratory. (2) The pool contains
+only the top 10 of five systems. Hole@10 is 0 for these systems, but recall-oriented metrics, and any
+system outside the pool, would be biased. (3) Adjudication was a team discussion without an independent
+adjudicator, and 27 decisions rest on titles or a ``lower when unsure'' rule. The hybrid's significant
+advantage over BM25 is sensitive to such choices (Table~\ref{tab:fsens}). (4) No relevant document
+(grade $\geq 2$) was found for one query (AES-GCM nonce reuse); excluding it changes no conclusion.
+(5) The authors wrote the queries and judged them. (6) The dense models may have seen arXiv abstracts
+during pre-training. (7) A grade of 1 earns nDCG gain, so systems partly get credit for documents that
+break a condition. With an exploratory strict gain (no gain for grade 1, \texttt{sNDCG@10}), the order
+is the same except that BM25+SPECTER2 (0.533) moves just above BM25 (0.523).
 
 \section{Conclusions}
 On security abstracts, a general dense retriever used without fine-tuning does not beat a careful BM25
-overall. The science-specific SPECTER2 is clearly worse than both. BM25 and E5 fail on different
-queries: BM25 on paraphrases and negation, E5 on exact identifiers. Their RRF fusion scores highest
-under every adjudication we sampled, but its gain over the better component is not significant with 50 queries, and it
-costs about 12$\times$ the query time of BM25. Every system largely ignores exclusions and date limits;
-handling them explicitly (S2) is more promising than switching models.
+overall, and the science-specific SPECTER2 is clearly worse than both. BM25 and E5 fail on different
+queries: BM25 on paraphrases and negation, E5 on exact identifiers. As a result, their RRF fusion is the
+best system (nDCG@10 0.744), significantly better than BM25, although that margin depends on how the
+judgment conflicts were adjudicated. It is not better than E5 alone, and it costs about 12$\times$ the
+query time of BM25. Every system largely ignores exclusions and date limits; handling them explicitly
+(S2) looks more promising than switching models.
 
 \section*{Contribution matrix}
 \begin{tabularx}{\linewidth}{@{}l X@{}}

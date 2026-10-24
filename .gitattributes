@@ -1,0 +1,4 @@
+# evidence files: keep byte-for-byte (their SHA-256 is recorded in data/qrels/provenance.json)
+judging/exports/*.json binary
+judging/adjudication/* binary
+data/qrels/* binary

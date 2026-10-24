@@ -1,0 +1,27 @@
+{
+  "qrels": "data/qrels/qrels.txt",
+  "qrels_sha256": "8cc5fac5842c4836edce58e09474ad6b2bff1c415e87404f30597d524cb0a8c5",
+  "frozen_at_utc": "2026-10-24T17:46:38+00:00",
+  "git_commit": "29e4a968473349f7e855ee062af529c4646465aa",
+  "pool": "judging/round1/pool.json",
+  "pool_id": "e2d5915c1130cb3c",
+  "exports": {
+    "judgments_Saksham_main.json": "46af05bacba987e4f17621337eaf4728889615fa5715fbfbb3e59b447a063065",
+    "judgments_Suraj_main.json": "cbb545f36a47445b99c36fda23ae3dd7193f090109862d7ca494efc182319e37",
+    "judgments_Swayam_main.json": "b29a15253e11d586bd2bdb90c2e5275492a057982dbac42fa8dc24b8861accf8",
+    "judgments_Tejas_main.json": "415cb4850a9103aa0c2404cc1ba7dc1d7a1b8e998b3c612f7244a1b06e117ee0"
+  },
+  "adjudication_sheet": "judging/adjudication/adjudication_sheet_completed.csv",
+  "adjudication_sha256": "19ea3d9ae84f1dff9e57eb83ad85b1b73cc1d6b2ea8f0ae465fb5c3187d45710",
+  "pairs": 1339,
+  "agreed": 1014,
+  "adjudicated": 325,
+  "agreement": {
+    "n": 1339,
+    "kappa_linear": 0.7604497737216767,
+    "kappa_quadratic": 0.8290705042398359,
+    "exact_agreement": 0.7572815533980582
+  },
+  "unjudged_documents": "treated as non-relevant (grade 0) by every metric; Hole@10 reports how often they occur",
+  "adjudication_note": "Adjudication of the 325 conflicting pairs (pool e2d5915c1130cb3c), completed 24 Oct 2026.\n\nHow it was done (as stated by the team on 24 Oct 2026): the final grades were decided in a team\ndiscussion and recorded in the sheet by Surajsinh Patil; the adjudicated_by column therefore lists\nonly \"Suraj\". There was no adjudicator independent of the original annotators: the annotators of a\nconflicting pair took part in the discussion of that pair. Suraj was one of the two annotators in 160\nof the 325 conflicts; his own grade was kept in 66 of them (41%), versus 51-55% for the other three.\n\nEvery final grade is one of the two submitted grades (199 the lower, 126 the higher).\n\nKnown issues, kept as decided by the team and disclosed:\n- 27 rows were resolved from the paper title or by a \"lower grade when unsure\" rule, as their\n  rationales say (25 of them to the lower grade; 6 cross the relevance line).\n  Listed in deliverables/judging/recheck_28.csv.\n- Query 5 / 2301.13581 (\"Machine Learning and Port Scans: A Systematic Review\"): its rationale text\n  was copied by mistake from the next row (2401.14979); the final grade 0 stands.\n\nThe original annotator grades are preserved unchanged in judging/exports/ and, per pair, in\ndata/qrels/qrels.provenance.csv.\n"
+}
