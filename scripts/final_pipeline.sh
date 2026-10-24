@@ -61,9 +61,9 @@ elif [ "$MODE" = final ]; then
   evaluate_all data/qrels/qrels.txt deliverables/final "Final (adjudicated qrels)."
   python3 scripts/make_report_tables.py --mode final
   echo
-  echo "Needs the corpus (run on Kaggle with the arXiv dataset attached, after this script):"
-  echo "  python scripts/bm25_sweep.py --corpus data/corpus/cscr.jsonl --topics $T --qrels data/qrels/qrels.txt --out deliverables/final/rq5 --figures deliverables/final/rq5 --tables deliverables/final/rq5"
-  echo "  python scripts/tokenizer_ablation.py --corpus data/corpus/cscr.jsonl --topics $T --qrels data/qrels/qrels.txt --out deliverables/final/rq5 --tables deliverables/final/rq5 --runs-dir runs/ablation"
+  echo "RQ5 needs the corpus: run notebooks/kaggle_rq5.ipynb on Kaggle, or with data/corpus/cscr.jsonl present:"
+  echo "  python scripts/bm25_sweep.py --corpus data/corpus/cscr.jsonl          # -> deliverables/rq5/sweep"
+  echo "  python scripts/tokenizer_ablation.py --corpus data/corpus/cscr.jsonl  # -> deliverables/rq5/tokenisation"
 else
   echo "unknown mode $MODE"; exit 1
 fi

@@ -115,8 +115,8 @@ if not glob.glob("judging/exports/*_main.json"):
 # !python scripts/merge_judgments.py --exports "judging/exports/*_main.json" --adjudication data/qrels/disagreements.csv --out data/qrels --freeze""")
 code("""Q = "data/qrels/qrels.txt"
 !python scripts/evaluate.py --qrels {Q} --topics {T} --runs {RUNS} --out results --tables report/tables --figures report/figures
-!python scripts/bm25_sweep.py --corpus {C} --topics {T} --qrels {Q} --out results --figures report/figures --tables report/tables
-!python scripts/tokenizer_ablation.py --corpus {C} --topics {T} --qrels {Q} --out results --tables report/tables""")
+!python scripts/bm25_sweep.py --corpus {C}
+!python scripts/tokenizer_ablation.py --corpus {C}""")
 md("### Stretch goals")
 code("""!python scripts/stretch_rerank.py --run runs/bm25+e5.run --corpus {C} --topics {T} --out runs/ce.run
 !python scripts/stretch_time_filter.py --run runs/bm25+e5.run --corpus {C} --topics {T} --out runs/bm25+e5+time.run

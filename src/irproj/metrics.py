@@ -10,6 +10,9 @@ Conventions (checked against pytrec_eval in tests/test_metrics.py):
   * Recall@k is relative to the judged pool (only judged documents can be relevant)
   * Hole@k is the fraction of the top-k that was never judged [BEIR, Thakur et al. 2021]
   * sNDCG@k (exploratory) is nDCG@k with gain max(grade - 1, 0)
+  * nDCGc@k ("condensed list", Sakai 2007) is nDCG@k after removing unjudged documents from the
+    ranking. Used only for runs outside the judging pool (RQ5), as a robustness check: it is
+    neither a bound nor an unbiased estimate.
 """
 from __future__ import annotations
 
@@ -38,6 +41,11 @@ def strict_ndcg_at_k(ranked: Sequence[str], judged: Dict[str, int], k: int) -> f
     """Exploratory variant: gain = max(grade - 1, 0), so grade-1 documents ('on topic but does not
     answer / breaks a condition') earn nothing. Not the pre-registered metric."""
     return ndcg_at_k(ranked, {d: max(g - 1, 0) for d, g in judged.items()}, k)
+
+
+def condensed_ndcg_at_k(ranked: Sequence[str], judged: Dict[str, int], k: int) -> float:
+    """nDCG@k on the condensed list: unjudged documents are dropped before cutting at k."""
+    return ndcg_at_k([d for d in ranked if d in judged], judged, k)
 
 
 def precision_at_k(ranked, judged, k, rel_level):
@@ -88,6 +96,8 @@ def per_query(run: Run, qrels: Qrels, metrics: Sequence[str] = DEFAULT_METRICS,
             k = int(k)
             if name == "ndcg":
                 v = ndcg_at_k(ranked, judged, k)
+            elif name == "ndcgc":
+                v = condensed_ndcg_at_k(ranked, judged, k)
             elif name == "sndcg":
                 v = strict_ndcg_at_k(ranked, judged, k)
             elif name == "p":

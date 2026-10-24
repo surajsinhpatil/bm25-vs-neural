@@ -22,7 +22,7 @@ Every result here carries one label:
 | Error analysis with titles and both annotators' original grades | validated (examples), metrics final | `final/analysis/error_analysis.md` |
 | Efficiency from run logs | validated as measured | `efficiency/efficiency.md` |
 | SciFact implementation checks (not cs.CR) | validated | `validation/` |
-| RQ5: BM25 k1/b sweep (5-fold CV) and tokenisation ablation | **blocked**: needs the full corpus, run on Kaggle | commands printed by `final_pipeline.sh final` |
+| RQ5: BM25 k1/b sweep (5-fold CV) and tokenisation ablation | **pending**: code ready and tested, not yet run on the real corpus (needs Kaggle); results will be exploratory | `rq5/README.md`, `../notebooks/kaggle_rq5.ipynb` |
 | Final report | final except RQ5, GitHub URL and contribution matrix | `final_report.pdf` |
 | Presentation outline | updated with the final numbers | `presentation_outline.md` |
 | Preliminary (pre-adjudication) results | superseded, kept for the record | `preliminary/` |

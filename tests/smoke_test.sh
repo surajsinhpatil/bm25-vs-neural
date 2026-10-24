@@ -28,10 +28,11 @@ python3 scripts/merge_judgments.py --exports "$W/exports/*.json" --out "$W/qrels
 cp "$W/qrels/qrels.preliminary-lower.txt" "$W/qrels/qrels.txt"
 python3 scripts/evaluate.py --qrels "$W/qrels/qrels.txt" --topics $T --runs $RUNS --out "$W/results" \
   --tables "$W/tables" --figures "$W/figures" --n-perm 2000
-python3 scripts/bm25_sweep.py --corpus "$W/corpus.jsonl" --topics $T --qrels "$W/qrels/qrels.txt" \
-  --out "$W/results" --figures "$W/figures" --tables "$W/tables" | tail -12
-python3 scripts/tokenizer_ablation.py --corpus "$W/corpus.jsonl" --topics $T --qrels "$W/qrels/qrels.txt" \
-  --out "$W/results" --tables "$W/tables" --runs-dir "$W/runs/ablation"
+QSHA=$(python3 -c "import sys; from irproj.io import sha256_file; print(sha256_file(sys.argv[1]))" "$W/qrels/qrels.txt")
+RQ5ARGS=(--corpus "$W/corpus.jsonl" --topics $T --qrels "$W/qrels/qrels.txt" --expected-qrels-sha "$QSHA" \
+  --expected-corpus /nonexistent --reference-run "$W/runs/bm25.run" --tables "$W/tables")
+python3 scripts/bm25_sweep.py "${RQ5ARGS[@]}" --out "$W/rq5/sweep" | tail -12
+python3 scripts/tokenizer_ablation.py "${RQ5ARGS[@]}" --out "$W/rq5/tokenisation" | tail -3
 python3 scripts/stretch_time_filter.py --run "$W/runs/bm25+e5.run" --corpus "$W/corpus.jsonl" --topics $T \
   --out "$W/runs/bm25+e5+time.run"
 python3 scripts/stretch_cc_fusion.py --lexical "$W/runs/bm25.run" --dense "$W/runs/e5.run" --topics $T \
