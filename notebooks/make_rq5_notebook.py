@@ -66,7 +66,7 @@ code("""sh("git status --porcelain data/qrels runs judging deliverables/final de
 out = subprocess.run("git status --porcelain data/qrels runs judging deliverables/final", shell=True,
                      capture_output=True, text=True).stdout.strip()
 assert not out, "a frozen file changed:\\n" + out
-sh("zip -qr /kaggle/working/rq5_outputs.zip deliverables/rq5 report/tables/rq5_sweep.tex report/tables/rq5_tok.tex "
+sh("zip -qr /kaggle/working/rq5_outputs.zip deliverables/rq5 "
    "data/corpus/cscr.jsonl.manifest.json data/corpus/cscr.ids.txt")
 sh("ls -la /kaggle/working/rq5_outputs.zip")""")
 

@@ -1,0 +1,32 @@
+{
+  "source": "/kaggle/input/datasets/Cornell-University/arxiv/arxiv-metadata-oai-snapshot.json",
+  "category": "cs.CR",
+  "years": [
+    2016,
+    2025
+  ],
+  "max_docs": 50000,
+  "seed": 13,
+  "n_docs": 39613,
+  "n_primary_cr": 26487,
+  "year_histogram": {
+    "2016": 1037,
+    "2017": 1483,
+    "2018": 2268,
+    "2019": 3011,
+    "2020": 3700,
+    "2021": 3992,
+    "2022": 4510,
+    "2023": 5183,
+    "2024": 6542,
+    "2025": 7887
+  },
+  "filter_counts": {
+    "in_category": 53454,
+    "out_of_date_range": 13794,
+    "withdrawn": 35,
+    "duplicate_title": 12,
+    "after_filtering": 39613
+  },
+  "sha256": "fda391ecc5b68074ce4ac7796f91b4f51aa8d540ff930ab4b78518632ace9ce9"
+}

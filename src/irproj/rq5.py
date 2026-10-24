@@ -212,7 +212,11 @@ def heatmap(path: str | Path, k1s: Sequence[float], bs: Sequence[float], grid: n
             dark = hi > lo and (v - lo) / (hi - lo) > 0.5
             ax.text(j, i, fmt.format(v), ha="center", va="center", fontsize=4.2,
                     color="white" if dark else INK)
-    for name, (k1, b) in (marks or {}).items():
+    merged: Dict[Setting, List[str]] = {}
+    for name, p in (marks or {}).items():
+        merged.setdefault(tuple(p), []).append(name)
+    for (k1, b), names in merged.items():
+        name = " = ".join(names)
         if k1 in k1s and b in bs:
             ax.add_patch(plt.Rectangle((list(bs).index(b) - 0.5, list(k1s).index(k1) - 0.5), 1, 1,
                                        fill=False, ec="#d6336c", lw=1.0))

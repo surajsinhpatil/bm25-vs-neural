@@ -1,0 +1,19 @@
+\begin{table}[htb]
+\centering
+\small
+\caption{RQ5a (exploratory): BM25 (identifier-aware analyzer) over 132 $(k_1, b)$ settings on the 50 cs.CR queries. $\Delta$ ($p$): cross-validated minus default, paired randomisation test. Only the default run was in the judging pool; nDCG@10 counts unjudged documents as non-relevant, condensed nDCG@10 removes them, Hole@10 is the share of unjudged documents in the top 10. $^\dagger$Chosen on the same queries it is scored on: sensitivity only, not a performance estimate.}
+\label{tab:rq5sweep}
+\begin{tabular}{lccccc}
+\toprule
+BM25 setting & nDCG@10 & $\Delta$ ($p$) & Cond.\ nDCG@10 & $\Delta$ ($p$) & Hole@10 \\
+\midrule
+Default ($k_1$=1.2, $b$=0.75) & 0.689 & -- & 0.689 & -- & 0.0\% \\
+5-fold CV, seed 11 & 0.684 & $-$0.006 (0.012) & 0.689 & $-$0.0001 (0.957) & 1.8\% \\
+CV, 20 other fold seeds & 0.679--0.687 &  &  &  &  \\
+Anserini default ($k_1$=0.9, $b$=0.4) & 0.672 &  & 0.710 &  & 7.2\% \\
+Best, nDCG@10$^\dagger$ ($k_1$=1.2, $b$=0.75) & 0.689 &  & 0.689 &  & 0.0\% \\
+Best, cond.$^\dagger$ ($k_1$=0.2, $b$=0.9) & 0.602 &  & 0.730 &  & 25.8\% \\
+Range, all 132 settings & 0.571--0.689 &  & 0.684--0.730 &  & 0\%--30\% \\
+\bottomrule
+\end{tabular}
+\end{table}

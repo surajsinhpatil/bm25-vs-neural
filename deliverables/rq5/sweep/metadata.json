@@ -1,0 +1,38 @@
+{
+  "created_utc": "2026-10-24T21:16:19+00:00",
+  "git": {
+    "commit": "df51119a0ddb207b567646ead623e8590f2f7d92",
+    "dirty": false
+  },
+  "python": "3.13.15",
+  "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+  "packages": {
+    "numpy": "2.1.3",
+    "scipy": "1.16.3",
+    "nltk": "3.9.1",
+    "matplotlib": "3.10.0",
+    "pandas": "2.3.3",
+    "irproj": "0.2.0"
+  },
+  "args": {
+    "corpus": "data/corpus/cscr.jsonl",
+    "topics": "/kaggle/working/bm25-vs-neural/data/queries/topics.jsonl",
+    "qrels": "/kaggle/working/bm25-vs-neural/data/qrels/qrels.txt",
+    "expected_qrels_sha": null,
+    "expected_corpus": "/kaggle/working/bm25-vs-neural/data/corpus/EXPECTED.json",
+    "reference_run": "/kaggle/working/bm25-vs-neural/runs/bm25.run",
+    "allow_corpus_mismatch": false,
+    "analyzer": "id",
+    "folds": 5,
+    "depth": 1000,
+    "out": "/kaggle/working/bm25-vs-neural/deliverables/rq5/sweep",
+    "tables": "/kaggle/working/bm25-vs-neural/report/tables"
+  },
+  "files_sha256": {
+    "corpus": "fda391ecc5b68074ce4ac7796f91b4f51aa8d540ff930ab4b78518632ace9ce9",
+    "topics": "9f3953a5b9a61e004d1a4c562edf28b7a35efd4f6ed685d29fc9ad7f529ab1a5",
+    "qrels": "8cc5fac5842c4836edce58e09474ad6b2bff1c415e87404f30597d524cb0a8c5"
+  },
+  "script": "scripts/bm25_sweep.py",
+  "status": "EXPLORATORY"
+}

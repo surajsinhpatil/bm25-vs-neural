@@ -1,0 +1,247 @@
+{
+  "status": "EXPLORATORY",
+  "design": {
+    "k1": 1.2,
+    "b": 0.75,
+    "variants": [
+      "id",
+      "plain",
+      "id-nostem",
+      "plain-nostem",
+      "id-nostop"
+    ],
+    "reference": "id",
+    "primary_metric": "ndcg@10",
+    "test": "paired randomisation (100k), Holm over the comparisons with id",
+    "depth": 1000
+  },
+  "checks": {
+    "qrels_sha256": "8cc5fac5842c4836edce58e09474ad6b2bff1c415e87404f30597d524cb0a8c5",
+    "corpus": {
+      "path": "data/corpus/cscr.jsonl",
+      "sha256": "fda391ecc5b68074ce4ac7796f91b4f51aa8d540ff930ab4b78518632ace9ce9",
+      "n_docs": 39613,
+      "skipped": false,
+      "expected_n_docs": 39613,
+      "expected_sha256_prefix": "fda391ecc5b6",
+      "n_docs_match": true,
+      "sha256_prefix_match": true,
+      "match": true
+    },
+    "reproduction": {
+      "reference": "/kaggle/working/bm25-vs-neural/runs/bm25.run",
+      "k": 10,
+      "queries": 50,
+      "identical_topk": 50,
+      "max_abs_score_diff": 4.000000000559112e-06,
+      "mismatched_queries": [],
+      "ok": true
+    }
+  },
+  "variants": {
+    "id": {
+      "description": "Identifier-aware + Porter (main)",
+      "mode": "id",
+      "stem": true,
+      "stopwords": true,
+      "vocab": 56862,
+      "avgdl": 140.0296173095703,
+      "index_mb": 29.31,
+      "index_seconds": 23.39,
+      "ndcg@10": 0.6894861671375183,
+      "ndcgc@10": 0.6894861671375183,
+      "hole@10": 0.0,
+      "mrr@10": 0.6323015873015873,
+      "p@5": 0.516,
+      "ndcg@10_identifier": 0.7980285511893438,
+      "ndcg@10_homonym": 0.839440045034301,
+      "ndcg@10_negation": 0.5595108945800928,
+      "ndcg@10_time": 0.6652165301060082,
+      "ndcg@10_paraphrase": 0.5852348147778461
+    },
+    "plain": {
+      "description": "Lucene-like + Porter",
+      "mode": "plain",
+      "stem": true,
+      "stopwords": true,
+      "vocab": 53002,
+      "avgdl": 140.3401336669922,
+      "index_mb": 29.14,
+      "index_seconds": 16.87,
+      "ndcg@10": 0.686788872410573,
+      "ndcgc@10": 0.6900404249412463,
+      "hole@10": 0.008,
+      "mrr@10": 0.6323015873015873,
+      "p@5": 0.508,
+      "ndcg@10_identifier": 0.7980285511893438,
+      "ndcg@10_homonym": 0.8320723116804626,
+      "ndcg@10_negation": 0.5595108945800928,
+      "ndcg@10_time": 0.6689322004439902,
+      "ndcg@10_paraphrase": 0.5754004041589761,
+      "diff_vs_id": -0.002697294726945259,
+      "diff_ci95_vs_id": [
+        -0.008039700037301742,
+        0.0015403603422762804
+      ],
+      "p_vs_id": 0.2673273267267327,
+      "wins_ties_losses_vs_id": [
+        3,
+        41,
+        6
+      ],
+      "p_holm_vs_id": 0.2673273267267327,
+      "significant": false,
+      "diff_vs_id_condensed": 0.0005542578037280061,
+      "diff_ci95_vs_id_condensed": [
+        -0.0013213974820398553,
+        0.0035304485774105745
+      ],
+      "p_vs_id_condensed": 0.987830121698783,
+      "wins_ties_losses_vs_id_condensed": [
+        3,
+        41,
+        6
+      ],
+      "p_holm_vs_id_condensed": 0.987830121698783,
+      "significant_condensed": false
+    },
+    "id-nostem": {
+      "description": "Identifier-aware, no stemming",
+      "mode": "id",
+      "stem": false,
+      "stopwords": true,
+      "vocab": 74248,
+      "avgdl": 140.0296173095703,
+      "index_mb": 31.91,
+      "index_seconds": 18.54,
+      "ndcg@10": 0.600333535124524,
+      "ndcgc@10": 0.7222138951722468,
+      "hole@10": 0.23600000000000002,
+      "mrr@10": 0.6656904761904763,
+      "p@5": 0.484,
+      "ndcg@10_identifier": 0.7834256756733355,
+      "ndcg@10_homonym": 0.7011015536217042,
+      "ndcg@10_negation": 0.4939929860098327,
+      "ndcg@10_time": 0.6655464914816303,
+      "ndcg@10_paraphrase": 0.35760096883611714,
+      "diff_vs_id": -0.08915263201299439,
+      "diff_ci95_vs_id": [
+        -0.13110395663107305,
+        -0.050445047111227
+      ],
+      "p_vs_id": 3.999960000399996e-05,
+      "wins_ties_losses_vs_id": [
+        13,
+        4,
+        33
+      ],
+      "p_holm_vs_id": 0.00015999840001599985,
+      "significant": true,
+      "diff_vs_id_condensed": 0.03272772803472849,
+      "diff_ci95_vs_id_condensed": [
+        0.010727054208911074,
+        0.05646607362963981
+      ],
+      "p_vs_id_condensed": 0.005329946700532995,
+      "wins_ties_losses_vs_id_condensed": [
+        30,
+        8,
+        12
+      ],
+      "p_holm_vs_id_condensed": 0.02131978680213198,
+      "significant_condensed": true
+    },
+    "plain-nostem": {
+      "description": "Lucene-like, no stemming",
+      "mode": "plain",
+      "stem": false,
+      "stopwords": true,
+      "vocab": 70513,
+      "avgdl": 140.3401336669922,
+      "index_mb": 31.74,
+      "index_seconds": 14.82,
+      "ndcg@10": 0.5990874648559893,
+      "ndcgc@10": 0.7218635791598945,
+      "hole@10": 0.23800000000000004,
+      "mrr@10": 0.6656904761904763,
+      "p@5": 0.484,
+      "ndcg@10_identifier": 0.7833477835664732,
+      "ndcg@10_homonym": 0.7032913714838502,
+      "ndcg@10_negation": 0.4968306371686606,
+      "ndcg@10_time": 0.6543665632248454,
+      "ndcg@10_paraphrase": 0.35760096883611714,
+      "diff_vs_id": -0.09039870228152903,
+      "diff_ci95_vs_id": [
+        -0.13169555505182462,
+        -0.052543670390066244
+      ],
+      "p_vs_id": 3.999960000399996e-05,
+      "wins_ties_losses_vs_id": [
+        12,
+        3,
+        35
+      ],
+      "p_holm_vs_id": 0.00015999840001599985,
+      "significant": true,
+      "diff_vs_id_condensed": 0.03237741202237616,
+      "diff_ci95_vs_id_condensed": [
+        0.010352065284577052,
+        0.05617505618518139
+      ],
+      "p_vs_id_condensed": 0.005949940500594994,
+      "wins_ties_losses_vs_id_condensed": [
+        30,
+        8,
+        12
+      ],
+      "p_holm_vs_id_condensed": 0.02131978680213198,
+      "significant_condensed": true
+    },
+    "id-nostop": {
+      "description": "Identifier-aware, no stopword removal",
+      "mode": "id",
+      "stem": true,
+      "stopwords": false,
+      "vocab": 56873,
+      "avgdl": 194.15745544433594,
+      "index_mb": 34.11,
+      "index_seconds": 22.9,
+      "ndcg@10": 0.6733481439874583,
+      "ndcgc@10": 0.7039238044800352,
+      "hole@10": 0.06,
+      "mrr@10": 0.6531111111111112,
+      "p@5": 0.532,
+      "ndcg@10_identifier": 0.7794338741668299,
+      "ndcg@10_homonym": 0.8255376594588648,
+      "ndcg@10_negation": 0.5260128431869977,
+      "ndcg@10_time": 0.6621692348561553,
+      "ndcg@10_paraphrase": 0.5735871082684436,
+      "diff_vs_id": -0.016138023150060066,
+      "diff_ci95_vs_id": [
+        -0.03098301092997302,
+        0.0006821016059150353
+      ],
+      "p_vs_id": 0.047979520204797954,
+      "wins_ties_losses_vs_id": [
+        18,
+        9,
+        23
+      ],
+      "p_holm_vs_id": 0.09595904040959591,
+      "significant": false,
+      "diff_vs_id_condensed": 0.014437637342516747,
+      "diff_ci95_vs_id_condensed": [
+        0.0018543179832346513,
+        0.03331979368019003
+      ],
+      "p_vs_id_condensed": 0.034319656803431964,
+      "wins_ties_losses_vs_id_condensed": [
+        23,
+        14,
+        13
+      ],
+      "p_holm_vs_id_condensed": 0.06863931360686393,
+      "significant_condensed": false
+    }
+  }
+}

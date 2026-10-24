@@ -1,8 +1,23 @@
 # RQ5: BM25 sensitivity to k1, b and tokenisation
 
-**Status: PENDING.** The code is ready and tested, but nothing has run on the real corpus yet, so
-this folder holds no results. Run `notebooks/kaggle_rq5.ipynb` on Kaggle and unzip
-`rq5_outputs.zip` into the repository root.
+**Status: DONE, EXPLORATORY.** Run on Kaggle on 24 Oct 2026 from commit `df51119`. All checks passed:
+- frozen qrels SHA-256 `8cc5fac5…`;
+- corpus of 39,613 documents with SHA-256 `fda391ecc5b6…`;
+- the default BM25 run reproduced the committed `runs/bm25.run` (same top 10 for all 50 queries, scores within 4e-6).
+
+The files in `sweep/` and `tokenisation/`, and the corpus manifest and id list in `kaggle_run/`, are the Kaggle outputs, unchanged; this README is the only file edited since. `kaggle_run/rq5_outputs.sha256` (added after download) lists the SHA-256 of every file in the downloaded zip, plus the zip itself. `rq5_sweep.tex` and `rq5_tok.tex` were written by the experiment scripts on Kaggle. The report uses tables made from these outputs by `scripts/make_rq5_report.py`. Every number in those tables was checked independently against the per-query CSVs and against `trec_eval` on the saved runs.
+
+## Findings (details and caveats in report Section 5.6)
+- **k1 / b:** on nDCG@10, none of the 132 settings beats the default. 12 settings lie within 0.01 of it (k1 0.9–1.2, b 0.4–0.9).
+- **Cross-validated tuning:**
+  - nDCG@10 is 0.684 against 0.689 for the default (Δ −0.006, 95% CI −0.011 to −0.002, p = 0.012).
+  - On condensed nDCG@10 the difference is −0.0001 (p = 0.96).
+  - The metrics disagree, so the conclusion is "tuning did not help", not "tuning hurts".
+- **The two metrics favour opposite regions of the grid.** The best setting on condensed nDCG@10 is (0.2, 0.9), where 25.8% of the top 10 is unjudged. Across the grid, Hole@10 correlates with nDCG@10 at r = −0.97 and with condensed nDCG@10 at r = +0.86.
+- **Identifier handling (`plain` vs `id`):** Δ −0.003 (p_Holm 0.27); 41 of 50 queries are unchanged, and the two metrics agree. With Hole@10 at 0.8%, this is the one comparison almost free of pool bias.
+- **Stemming:** without stemming, nDCG@10 drops by 0.089, but Hole@10 rises to 23.6%, and condensed nDCG@10 rises by 0.033. Both differences are significant and point in opposite directions, so this is inconclusive.
+- **Stopwords:** no conclusion either way.
+- **What would settle it:** judging the 141 unjudged query–document pairs in the variants' top 10s.
 
 Every RQ5 result is **exploratory** (see "Interpretation" below). The frozen primary results
 (`data/qrels/`, `runs/`, `deliverables/final/`) are not changed. The scripts refuse to write into
@@ -56,7 +71,7 @@ Condensed nDCG is a robustness check, not a bound and not an unbiased estimate. 
 
 If check 2 or 3 fails, the scripts stop. `--allow-corpus-mismatch` overrides this, and the results are then labelled NOT COMPARABLE.
 
-## Outputs (after the Kaggle run)
+## Outputs
 ```
 deliverables/rq5/sweep/
   bm25_sweep.json             summary: design, checks, default, CV (+ test vs default, other seeds),
@@ -66,11 +81,16 @@ deliverables/rq5/sweep/
   bm25_sweep_cv_per_query.csv setting used for each held-out query, CV vs default per query
   bm25_sweep_{ndcg10,ndcgc10,hole10}.{pdf,png}   heatmaps
   metadata.json               commit, Python and package versions, SHA-256 of corpus/topics/qrels, arguments
+  rq5_sweep.tex               table written by the script
 deliverables/rq5/tokenisation/
-  tokenizer_ablation.json / .csv, tokenizer_ablation_per_query.csv, metadata.json
+  tokenizer_ablation.json / .csv, tokenizer_ablation_per_query.csv, metadata.json, rq5_tok.tex
   runs/bm25-<variant>.run     top 100 per query (TREC format)
-report/tables/rq5_sweep.tex, report/tables/rq5_tok.tex
+deliverables/rq5/kaggle_run/
+  cscr.jsonl.manifest.json    manifest of the corpus rebuilt on Kaggle (full SHA-256, filter counts)
+  cscr.ids.txt                the 39,613 arXiv ids
+  rq5_outputs.sha256          SHA-256 of every file in the downloaded rq5_outputs.zip
 ```
+Report tables, macros and the figure: `python scripts/make_rq5_report.py` writes `report/tables/rq5_{sweep,tok,macros}.tex` and `report/figures/rq5_sweep.pdf` from these files. It stops unless every recorded check passed.
 
 ## Run elsewhere
 To run outside Kaggle, `data/corpus/cscr.jsonl` must first be built from the arXiv snapshot (`scripts/build_corpus.py`). Then:

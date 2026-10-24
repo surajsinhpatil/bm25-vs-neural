@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Tokenisation ablation for BM25 ($k_1$=1.2, $b$=0.75; exploratory). $\Delta$ and $p_{\text{Holm}}$: nDCG@10 against the main analyzer (paired randomisation, Holm over 4 comparisons). Only the main run was in the judging pool, which favours it; condensed nDCG@10 removes unjudged documents.}
+\label{tab:rq5tok}
+\begin{tabular}{lccccccc}
+\toprule
+Analyzer & Vocab. & nDCG@10 & $\Delta$ & $p_{\text{Holm}}$ & nDCG@10 (cond.) & Hole@10 & nDCG@10 (ident.) \\
+\midrule
+Identifier-aware + Porter (main) & 56,862 & 0.689 & -- & -- & 0.689 & 0.0\% & 0.798 \\
+Lucene-like + Porter & 53,002 & 0.687 & $-$0.003 & 0.267 & 0.690 & 0.8\% & 0.798 \\
+Identifier-aware, no stemming & 74,248 & 0.600 & $-$0.089 & 0.000 & 0.722 & 23.6\% & 0.783 \\
+Lucene-like, no stemming & 70,513 & 0.599 & $-$0.090 & 0.000 & 0.722 & 23.8\% & 0.783 \\
+Identifier-aware, no stopword removal & 56,873 & 0.673 & $-$0.016 & 0.096 & 0.704 & 6.0\% & 0.779 \\
+\bottomrule
+\end{tabular}
+\end{table}

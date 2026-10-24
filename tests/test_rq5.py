@@ -247,3 +247,81 @@ def test_scripts_refuse_frozen_output(synthetic):
     r = _run("tokenizer_ablation.py", d, "--out", str(ROOT / "runs/ablation"), "--tables", str(d / "tab"))
     assert r.returncode != 0 and not (ROOT / "runs/ablation").exists()
     assert sha256_file(ROOT / "data/qrels/qrels.txt") == before
+
+
+# ----------------------------------------------------------------------------- committed Kaggle outputs (24 Oct 2026)
+RQ5 = ROOT / "deliverables/rq5"
+REMAP = {"report/tables/rq5_sweep.tex": "deliverables/rq5/sweep/rq5_sweep.tex",
+         "report/tables/rq5_tok.tex": "deliverables/rq5/tokenisation/rq5_tok.tex",
+         "data/corpus/cscr.jsonl.manifest.json": "deliverables/rq5/kaggle_run/cscr.jsonl.manifest.json",
+         "data/corpus/cscr.ids.txt": "deliverables/rq5/kaggle_run/cscr.ids.txt"}
+needs_outputs = pytest.mark.skipif(not (RQ5 / "sweep/bm25_sweep.json").exists(), reason="RQ5 not run yet")
+
+
+@needs_outputs
+def test_committed_outputs_match_kaggle_checksums():
+    n = 0
+    for line in (RQ5 / "kaggle_run/rq5_outputs.sha256").read_text().splitlines():
+        if line.startswith("#"):
+            continue
+        h, path = line.split(maxsplit=1)
+        if path == "deliverables/rq5/README.md":      # documentation, edited after the run (noted in the file)
+            continue
+        assert sha256_file(ROOT / REMAP.get(path, path)) == h, path
+        n += 1
+    assert n >= 20
+
+
+@needs_outputs
+def test_committed_outputs_passed_every_check():
+    exp = json.loads((ROOT / "data/corpus/EXPECTED.json").read_text())
+    for sub, name in (("sweep", "bm25_sweep.json"), ("tokenisation", "tokenizer_ablation.json")):
+        r = json.loads((RQ5 / sub / name).read_text())
+        m = json.loads((RQ5 / sub / "metadata.json").read_text())
+        assert r["status"] == "EXPLORATORY"
+        assert r["checks"]["qrels_sha256"] == rq5.frozen_qrels_sha() == m["files_sha256"]["qrels"]
+        assert r["checks"]["corpus"]["match"] is True and r["checks"]["corpus"]["sha256"].startswith(exp["sha256_prefix"])
+        assert r["checks"]["corpus"]["n_docs"] == exp["n_docs"]
+        assert r["checks"]["reproduction"]["ok"] and r["checks"]["reproduction"]["identical_topk"] == 50
+        assert m["git"]["commit"] and m["git"]["dirty"] is False
+        assert m["files_sha256"]["topics"] == sha256_file(ROOT / "data/queries/topics.jsonl")
+
+
+@needs_outputs
+def test_committed_default_equals_frozen_bm25_run():
+    from irproj.io import read_run
+    qrels = read_qrels(ROOT / "data/qrels/qrels.txt")
+    frozen = per_query(read_run(ROOT / "runs/bm25.run"), qrels, ("ndcg@10",))["ndcg@10"]
+    rebuilt = per_query(read_run(RQ5 / "tokenisation/runs/bm25-id.run"), qrels, ("ndcg@10",))["ndcg@10"]
+    assert max(abs(frozen[q] - rebuilt[q]) for q in frozen) < 1e-5
+
+
+@needs_outputs
+def test_report_tables_are_reproducible(tmp_path):
+    r = subprocess.run([sys.executable, str(ROOT / "scripts/make_rq5_report.py"), "--tables", str(tmp_path / "t"),
+                        "--figures", str(tmp_path / "f")], capture_output=True, text=True, cwd=ROOT)
+    assert r.returncode == 0, r.stderr[-2000:]
+    for f in ("rq5_sweep.tex", "rq5_tok.tex", "rq5_macros.tex"):
+        assert (tmp_path / "t" / f).read_text() == (ROOT / "report/tables" / f).read_text(), f
+    assert (tmp_path / "f/rq5_sweep.pdf").exists()
+
+
+@needs_outputs
+def test_report_script_rejects_unchecked_outputs(tmp_path):
+    import shutil
+    d = tmp_path / "rq5"
+    shutil.copytree(RQ5, d)
+    j = json.loads((d / "sweep/bm25_sweep.json").read_text())
+    j["checks"]["corpus"]["skipped"], j["checks"]["corpus"]["match"] = True, None
+    (d / "sweep/bm25_sweep.json").write_text(json.dumps(j))
+    r = subprocess.run([sys.executable, str(ROOT / "scripts/make_rq5_report.py"), "--rq5", str(d),
+                        "--tables", str(tmp_path / "t"), "--figures", str(tmp_path / "f")],
+                       capture_output=True, text=True, cwd=ROOT)
+    assert r.returncode != 0 and "corpus check failed or skipped" in (r.stdout + r.stderr)
+    assert not (tmp_path / "t" / "rq5_sweep.tex").exists()
+
+
+def test_heatmap_merges_labels_of_the_same_cell(tmp_path):
+    grid = np.arange(4.0).reshape(2, 2)
+    rq5.heatmap(tmp_path / "h.pdf", [1.0, 1.2], [0.5, 0.75], grid, "x", {"default": (1.2, 0.75), "best": (1.2, 0.75)})
+    assert (tmp_path / "h.pdf").exists() and (tmp_path / "h.png").exists()

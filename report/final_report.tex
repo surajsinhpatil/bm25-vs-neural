@@ -2,17 +2,18 @@
 \usepackage[margin=2cm,top=1.6cm,bottom=1.8cm]{geometry}
 \usepackage[T1]{fontenc}
 \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{\usepackage{mathptmx}}
-\usepackage{microtype,booktabs,graphicx,xcolor,tabularx,amsmath,enumitem,float}
+\usepackage{microtype,booktabs,graphicx,xcolor,tabularx,amsmath,enumitem,float,placeins}
 \usepackage[font=small,labelfont=bf,skip=3pt]{caption}
 \usepackage[colorlinks,urlcolor=blue!60!black,linkcolor=black,citecolor=black]{hyperref}
 \setlist{nosep,leftmargin=1.2em}
 \setlength{\parskip}{3pt}
 \setlength{\parindent}{0pt}
 % ------------------------------------------------------------------ set these
-\newcommand{\repourl}{\textcolor{red}{https://github.com/TODO/bm25-vs-neural}}
+\newcommand{\repourl}{\url{https://github.com/surajsinhpatil/bm25-vs-neural}}
 % -----------------------------------------------------------------------------
 \IfFileExists{tables/macros.tex}{\input{tables/macros.tex}}{}
 \IfFileExists{tables/fin_macros.tex}{\input{tables/fin_macros.tex}}{\newcommand{\finStatus}{tables missing}}
+\IfFileExists{tables/rq5_macros.tex}{\input{tables/rq5_macros.tex}}{}
 \newcommand{\inputor}[2]{\IfFileExists{#1}{\input{#1}}{#2}}
 % defined only in preliminary mode; in final mode these show "?" until the prose is revised
 \providecommand{\finSensN}{\textcolor{red}{?}}\providecommand{\finSensFirst}{\textcolor{red}{?}}
@@ -31,7 +32,8 @@ Swayam Kumud & 2025H1030063P & Saksham Singhal & 2025H1030208P
 \fcolorbox{black!40}{black!3}{\parbox{0.92\linewidth}{\small\textbf{Status:} final results on the frozen,
 adjudicated qrels (\finPairs{} judged pairs; checksum and provenance in \texttt{data/qrels/}). Per-category
 results are exploratory (10 queries each). The SciFact numbers (Section~\ref{sec:sci}) only validate the
-implementation and are not cs.CR results.}}
+implementation and are not cs.CR results. The RQ5 results (Section~\ref{sec:rq5}) are exploratory: only the
+default BM25 run was in the judging pool.}}
 \end{center}
 
 \section{Introduction}
@@ -167,10 +169,69 @@ CPU into 29\,MB and answers in 1.6\,ms. Each dense index is 116\,MB (4$\times$ l
 3\,min of T4 GPU time. Dense queries take 17--30\,ms, mostly query encoding; exact search alone takes
 6--7\,ms. BM25+E5 therefore buys its effectiveness at roughly 12$\times$ the query cost of BM25.
 
-\subsection{BM25 sensitivity (RQ5)}
-\pending{Not yet run. \texttt{bm25\_sweep.py} (5-fold cross-validation, so no test-tuned score is
-reported) and \texttt{tokenizer\_ablation.py} need the full corpus and run on Kaggle against the frozen qrels.}
+\subsection{BM25 sensitivity (RQ5, exploratory)}\label{sec:rq5}
+Both experiments use the corpus, the 50 queries, the frozen qrels and the metric code of the main
+experiment. They ran on Kaggle (commit \texttt{\rqCommit}) after three checks: the qrels match their frozen
+checksum, the rebuilt corpus is the frozen one (39{,}613 documents, SHA-256 \texttt{\rqCorpusSha\ldots}), and
+the default BM25 run rebuilt from it reproduces the pooled run (same top 10 for all 50 queries, scores within
+$\rqReproMax$). Outputs, metadata and checksums are in \texttt{deliverables/rq5/}.
 
+\textbf{Pool bias.} Only one BM25 configuration, the default ($k_1$=1.2, $b$=0.75, identifier-aware
+analyzer), was in the judging pool. Every other setting puts documents nobody judged into its top 10, and
+nDCG@10 counts them as non-relevant, which favours the default by construction. We therefore also report
+Hole@10 (the share of unjudged documents in the top 10) and condensed nDCG@10 \cite{sakai}, which removes
+unjudged documents from the ranking before cutting at 10. Condensed nDCG@10 is not a bound or an unbiased
+estimate either: it can overrate runs that were not pooled, and in our data it rises with Hole@10. We treat
+a result as robust only if both metrics agree. Across the 132 settings, Hole@10 correlates with nDCG@10 at $r$=\rqRHoleN{} and
+with condensed nDCG@10 at $r$=\rqRHoleC{} (Fig.~\ref{fig:rq5}). Away from the default, both metrics mostly
+reflect how many unjudged documents a setting retrieves.
+\inputor{tables/rq5_sweep.tex}{}
+\inputor{tables/rq5_tok.tex}{}
+\IfFileExists{figures/rq5_sweep.pdf}{\begin{figure}[htb]\centering
+\includegraphics[width=\linewidth]{figures/rq5_sweep.pdf}
+\caption{RQ5a (exploratory): nDCG@10, condensed nDCG@10 and Hole@10 over the $(k_1, b)$ grid. Boxes: the
+default setting and the best setting on condensed nDCG@10. The two metrics favour opposite regions, and
+condensed nDCG@10 is highest where most of the top 10 was never judged.}
+\label{fig:rq5}\end{figure}}{}
+
+\textbf{$k_1$ and $b$} (Table~\ref{tab:rq5sweep}). On nDCG@10, \rqAbove{} of the 132 settings score above the
+default. \rqWithinN{} settings lie within 0.01 of it ($k_1$ \rqPlateauK, $b$
+\rqPlateauB), and \rqWithinTwo\% lie within 0.02. Low $k_1$ looks clearly worse ($k_1\leq0.4$:
+\rqLowK), but these are the settings with the most unjudged documents. Condensed nDCG@10 orders the grid
+almost the other way round. Its best setting is \rqCondBest{} (\rqCondBestC), where \rqCondBestHole{} of
+the top 10 is unjudged and nDCG@10 is \rqCondBestN. Neither ranking of settings far from the default can be
+trusted without judging their documents. The default being the best setting on nDCG@10 is what pool bias
+predicts, so it is not evidence that the default is optimal.
+The only tuned estimate is cross-validated: 5 folds stratified by category, with $(k_1, b)$ chosen on four
+folds and scored on the fifth. It reaches \rqCV{} against \rqDefault{} for the default ($\Delta$ =
+\rqCVDiff, 95\% CI \rqCVlo{} to \rqCVhi, $p$=\rqCVp; better on \rqCVwins{} queries, equal on \rqCVties,
+worse on \rqCVlosses). On condensed nDCG@10 the difference vanishes (\rqCVcDiff, $p$=\rqCVcp). Because the
+metrics disagree, we do not claim that tuning hurts; we only conclude that it did not help. The folds chose
+\rqCVchosen, and \rqSeedN{} other fold assignments give \rqSeedMin--\rqSeedMax.
+
+\textbf{Tokenisation} (Table~\ref{tab:rq5tok}). \emph{Identifier handling} made no measurable difference.
+Replacing the identifier-aware analyzer with the Lucene-like one changes nDCG@10 by \rqPlainDiff{}
+($p_{\text{Holm}}$=\rqPlainP), \rqPlainTies{} of 50 queries are unchanged, and condensed nDCG@10 agrees.
+This is the one comparison almost free of pool bias: Hole@10 is \rqPlainHole{} (\rqPlainUnjudged{}
+unjudged documents in total). Even on the identifier queries both analyzers score \rqIdIdent. A plausible
+reason, which we did not test, is that these queries also contain distinctive words (``Log4Shell'',
+``Spectre''), and the Lucene-like analyzer still indexes the pieces of each identifier.
+\emph{Stemming} cannot be judged with the current qrels. Removing it lowers nDCG@10 by \rqNostemDiff{}
+($p_{\text{Holm}}$ \rqNostemP), but raises Hole@10 to \rqNostemHole, and condensed nDCG@10 moves the other
+way (\rqNostemCDiff, $p_{\text{Holm}}$=\rqNostemCP). Both differences are significant and in opposite
+directions, so we draw no conclusion; the same holds without the identifier handling.
+\emph{Keeping stopwords} (including ``not'') gives \rqNostopDiff{} on nDCG@10 ($p_{\text{Holm}}$=\rqNostopP)
+and \rqNostopCDiff{} on condensed nDCG@10 ($p_{\text{Holm}}$=\rqNostopCP), so no conclusion either. On the
+negation queries it scores \rqNostopNeg{} against \rqIdNeg, so keeping ``not'' as a term shows no benefit
+for negation here (with \rqNostopHole{} of its top 10 unjudged overall). Judging the \rqUnjudgedUnion{} unjudged query--document pairs in the variants' top
+10s would resolve these comparisons.
+
+\textbf{Answer to RQ5.} Near the default, BM25 is insensitive to $k_1$ and $b$: there is a broad plateau,
+and cross-validated tuning gave no gain. Identifier-aware tokenisation made no measurable difference on
+our queries. Whether stemming, stopword removal or settings far from the default matter cannot be decided
+with the current judgments.
+
+\FloatBarrier
 \section{Limitations}
 (1) There are 50 queries, 10 per category, so category effects are exploratory. (2) The pool contains
 only the top 10 of five systems. Hole@10 is 0 for these systems, but recall-oriented metrics, and any
@@ -181,7 +242,10 @@ advantage over BM25 is sensitive to such choices (Table~\ref{tab:fsens}). (4) No
 (5) The authors wrote the queries and judged them. (6) The dense models may have seen arXiv abstracts
 during pre-training. (7) A grade of 1 earns nDCG gain, so systems partly get credit for documents that
 break a condition. With an exploratory strict gain (no gain for grade 1, \texttt{sNDCG@10}), the order
-is the same except that BM25+SPECTER2 (0.533) moves just above BM25 (0.523).
+is the same except that BM25+SPECTER2 (0.533) moves just above BM25 (0.523). (8) RQ5 is exploratory: only
+the default BM25 configuration was pooled, so other settings and analyzers are scored with unjudged
+documents in their top 10 (up to 30\%), and ordinary and condensed nDCG@10 disagree for most of them.
+The cross-validation reuses the same 50 queries.
 
 \section{Conclusions}
 On security abstracts, a general dense retriever used without fine-tuning does not beat a careful BM25
@@ -190,18 +254,21 @@ queries: BM25 on paraphrases and negation, E5 on exact identifiers. As a result,
 best system (nDCG@10 0.744), significantly better than BM25, although that margin depends on how the
 judgment conflicts were adjudicated. It is not better than E5 alone, and it costs about 12$\times$ the
 query time of BM25. Every system largely ignores exclusions and date limits; handling them explicitly
-(S2) looks more promising than switching models.
+(S2) looks more promising than switching models. BM25 itself is robust near its default parameters, and
+identifier-aware tokenisation made no measurable difference. Whether stemming or stopword removal matter
+remains open until the documents those variants retrieve are judged.
 
 \section*{Contribution matrix}
 \begin{tabularx}{\linewidth}{@{}l X@{}}
 \toprule
 Member & Components\\
 \midrule
-Surajsinh Patil & \pending{fill in}\\
-Tejas Mahajan & \pending{fill in}\\
-Swayam Kumud & \pending{fill in}\\
-Saksham Singhal & \pending{fill in}\\
-All & Query writing; relevance judging (about 670 judgments each); adjudication\\
+Surajsinh Patil & \pending{to be filled in by the group}\\
+Tejas Mahajan & \pending{to be filled in by the group}\\
+Swayam Kumud & \pending{to be filled in by the group}\\
+Saksham Singhal & \pending{to be filled in by the group}\\
+All & Relevance judging (635--697 judgments each, 2{,}678 in total); resolving the 325 judgment conflicts
+in a team discussion (recorded by Surajsinh Patil)\\
 \bottomrule
 \end{tabularx}
 
@@ -214,6 +281,7 @@ All & Query writing; relevance judging (about 670 judgments each); adjudication\
 \bibitem{bruch} S.~Bruch, S.~Gai, A.~Ingber. An Analysis of Fusion Functions for Hybrid Retrieval. \emph{ACM TOIS}, 2023.
 \bibitem{nevir} O.~Weller, D.~Lawrie, B.~Van Durme. NevIR: Negation in Neural Information Retrieval. \emph{EACL}, 2024.
 \bibitem{smucker} M.~D.~Smucker, J.~Allan, B.~Carterette. A Comparison of Statistical Significance Tests for Information Retrieval Evaluation. \emph{CIKM}, 2007.
+\bibitem{sakai} T.~Sakai. Alternatives to Bpref. \emph{SIGIR}, 2007.
 \bibitem{voorhees} E.~M.~Voorhees. Variations in Relevance Judgments and the Measurement of Retrieval Effectiveness. \emph{Inf.\ Process.\ Manage.}, 2000.
 \end{thebibliography}
 \end{document}

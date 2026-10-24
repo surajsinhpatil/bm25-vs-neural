@@ -2,3 +2,7 @@
 judging/exports/*.json binary
 judging/adjudication/* binary
 data/qrels/* binary
+# RQ5 outputs from Kaggle: keep byte-for-byte (their SHA-256 is in deliverables/rq5/kaggle_run/rq5_outputs.sha256)
+deliverables/rq5/sweep/** -text
+deliverables/rq5/tokenisation/** -text
+deliverables/rq5/kaggle_run/** -text

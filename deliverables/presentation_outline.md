@@ -36,5 +36,8 @@ All numbers are final (frozen, adjudicated qrels; 24 Oct 2026).
     queries; adjudication without an independent adjudicator (27 decisions from titles); possible pre-training exposure of the dense models; one query with no relevant document.
 11. **Conclusions (1 min).** On technical security text, use BM25 as a serious baseline. Choose the
     method by query type. Handle conditions (negation, dates) explicitly rather than hoping a model learns them.
-12. **Backup slides.** SciFact validation, agreement per annotator pair, significance table, RQ5 sweep
-    (once run on Kaggle).
+12. **Backup slides.** SciFact validation, agreement per annotator pair, significance table, RQ5
+    (exploratory):
+    - k1/b heatmaps (nDCG@10, condensed, Hole@10): flat near the default; cross-validated tuning gave no gain.
+    - Identifier handling makes no measurable difference.
+    - Stemming is inconclusive because of pool bias (141 unjudged pairs would settle it).

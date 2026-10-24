@@ -10,7 +10,7 @@ Design (fixed before any result was computed):
     setting is reported as sensitivity only, never as a performance estimate.
 
     python scripts/bm25_sweep.py --corpus data/corpus/cscr.jsonl
-Outputs: deliverables/rq5/sweep/ (CSV, JSON, metadata, figures) and report/tables/rq5_sweep.tex
+Outputs: deliverables/rq5/sweep/ (CSV, JSON, metadata, figures, rq5_sweep.tex)
 """
 import argparse
 import csv
@@ -44,7 +44,8 @@ ap.add_argument("--analyzer", default="id")
 ap.add_argument("--folds", type=int, default=5)
 ap.add_argument("--depth", type=int, default=1000)
 ap.add_argument("--out", default=str(ROOT / "deliverables/rq5/sweep"))
-ap.add_argument("--tables", default=str(ROOT / "report/tables"))
+ap.add_argument("--tables", default=str(ROOT / "deliverables/rq5/sweep"),
+                help="folder for rq5_sweep.tex (the report tables are made by make_rq5_report.py)")
 a = ap.parse_args()
 
 OUT = rq5.guard_output(a.out)

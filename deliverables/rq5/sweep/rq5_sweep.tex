@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\small
+\caption{BM25 sensitivity to $k_1$ and $b$ (identifier-aware analyzer; exploratory). CV $-$ default: $-$0.006 nDCG@10, $p$=0.012 (paired randomisation). Only the default was in the judging pool: unjudged documents count as non-relevant in nDCG@10 and are removed in condensed nDCG@10.}
+\label{tab:rq5sweep}
+\begin{tabular}{lccc}
+\toprule
+BM25 setting & nDCG@10 & nDCG@10 (cond.) & Hole@10 \\
+\midrule
+Default ($k_1$=1.2, $b$=0.75) & 0.689 & 0.689 & 0.0\% \\
+5-fold CV (seed 11) & 0.684 & 0.689 & 1.8\% \\
+5-fold CV, 20 other seeds (min--max) & 0.679--0.687 & -- & -- \\
+Best on test queries ($k_1$=1.2, $b$=0.75); not a fair estimate & 0.689 & 0.689 & 0.0\% \\
+Range over the 132 settings & 0.571--0.689 & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}

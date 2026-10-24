@@ -13,7 +13,7 @@ Only the `id` run was in the judging pool, so Hole@10 and condensed nDCG@10 are 
 pool favours `id`, so "worse than id" is weaker evidence than "better than id".
 
     python scripts/tokenizer_ablation.py --corpus data/corpus/cscr.jsonl
-Outputs: deliverables/rq5/tokenisation/ (CSV, JSON, metadata, top-100 runs), report/tables/rq5_tok.tex
+Outputs: deliverables/rq5/tokenisation/ (CSV, JSON, metadata, top-100 runs, rq5_tok.tex)
 """
 import argparse
 import csv
@@ -45,7 +45,8 @@ ap.add_argument("--variants", nargs="+", default=["id", "plain", "id-nostem", "p
 ap.add_argument("--depth", type=int, default=1000)
 ap.add_argument("--save-depth", type=int, default=100, help="depth of the run files written")
 ap.add_argument("--out", default=str(ROOT / "deliverables/rq5/tokenisation"))
-ap.add_argument("--tables", default=str(ROOT / "report/tables"))
+ap.add_argument("--tables", default=str(ROOT / "deliverables/rq5/tokenisation"),
+                help="folder for rq5_tok.tex (the report tables are made by make_rq5_report.py)")
 a = ap.parse_args()
 
 MAIN = "id"
@@ -144,7 +145,7 @@ for v, r in res.items():
         dtxt, ptxt = "--", "--"
     else:
         dtxt = f"{r['diff_vs_id']:+.3f}".replace("-", "$-$").replace("+", "$+$")
-        ptxt = R.fmt(r["p_holm_vs_id"], 3)
+        ptxt = "$<$0.001" if r["p_holm_vs_id"] < 0.001 else R.fmt(r["p_holm_vs_id"], 3)
     rows.append([NAMES.get(v, v), f"{r['vocab']:,}", f3(r["ndcg@10"]), dtxt, ptxt, f3(r["ndcgc@10"]),
                  R.fmt(100 * r["hole@10"], 1) + r"\%", f3(r["ndcg@10_identifier"])])
 cap = (f"{'' if comparable else 'NOT COMPARABLE: corpus differs. '}Tokenisation ablation for BM25 "

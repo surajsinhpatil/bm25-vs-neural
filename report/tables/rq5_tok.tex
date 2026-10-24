@@ -1,0 +1,17 @@
+\begin{table}[htb]
+\centering
+\small\setlength{\tabcolsep}{5pt}
+\caption{RQ5b (exploratory): tokenisation ablation, $k_1$=1.2, $b$=0.75 for every analyzer; all use Lucene's stopwords and the Porter stemmer unless stated. $\Delta$ ($p_{\text{Holm}}$): difference from the main analyzer, paired randomisation test, Holm over the 4 comparisons, for nDCG@10 and for condensed nDCG@10 separately. W/T/L: queries where the variant is better / equal / worse on nDCG@10. Only the main run was in the judging pool, so a high Hole@10 penalises a variant in nDCG@10 for documents nobody judged.}
+\label{tab:rq5tok}
+\begin{tabular}{lcccccc}
+\toprule
+Analyzer & nDCG@10 & $\Delta$ ($p_{\text{Holm}}$) & Cond.\ nDCG@10 & $\Delta$ ($p_{\text{Holm}}$) & Hole@10 & W/T/L \\
+\midrule
+Identifier-aware (main) & 0.689 & -- & 0.689 & -- & 0.0\% & -- \\
+Lucene-like & 0.687 & $-$0.003 (0.267) & 0.690 & $+$0.001 (0.988) & 0.8\% & 3/41/6 \\
+Identifier-aware, no stem. & 0.600 & $-$0.089 ($<$0.001) & 0.722 & $+$0.033 (0.021) & 23.6\% & 13/4/33 \\
+Lucene-like, no stem. & 0.599 & $-$0.090 ($<$0.001) & 0.722 & $+$0.032 (0.021) & 23.8\% & 12/3/35 \\
+Identifier-aware, stopwords kept & 0.673 & $-$0.016 (0.096) & 0.704 & $+$0.014 (0.069) & 6.0\% & 18/9/23 \\
+\bottomrule
+\end{tabular}
+\end{table}
